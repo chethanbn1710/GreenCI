@@ -5,14 +5,15 @@ const scheduleJob = require("../scheduler/jobScheduler");
 
 router.post("/", (req, res) => {
 
-  const { repository, branch, commit_id } = req.body;
+  console.log("Webhook received");
+  console.log(req.body);
 
-  const job = scheduleJob(repository, branch, commit_id);
+  const repo = req.body.repository?.name;
+  const branch = req.body.ref;
 
-  res.json({
-    message: "Job scheduled",
-    job
-  });
+  const job = scheduleJob(repo, branch, "commit");
+
+  res.json({ message: "Job scheduled", job });
 
 });
 
