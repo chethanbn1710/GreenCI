@@ -2,7 +2,8 @@ const { exec } = require("child_process");
 
 const stagesTemplate = [
   "npm install",
-  "npm test"
+  "cd backend && npm install",
+  "cd backend && npm test"
 ];
 
 function runPipeline(job, repoPath) {
