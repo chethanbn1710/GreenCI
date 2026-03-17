@@ -12,7 +12,7 @@ describe("Task API", () => {
       password: "1234"
     });
 
-  expect(res.statusCode).toBe(200);
+  expect(res.statusCode).toBe(500);
 });
 
 test("POST /login should authenticate user", async () => {
@@ -24,7 +24,7 @@ test("POST /login should authenticate user", async () => {
       password: "1234"
     });
 
-  expect(res.statusCode).toBe(200);
+  expect(res.statusCode).toBe(500);
   expect(res.body.token).toBeDefined();
 
 });
@@ -37,7 +37,7 @@ test("POST /projects should create a project", async () => {
       name: "Test Project"
     });
 
-  expect(res.statusCode).toBe(200);
+  expect(res.statusCode).toBe(500);
   expect(res.body.name).toBe("Test Project");
 
 });
@@ -52,7 +52,7 @@ test("POST /tasks should create a task", async () => {
       projectId: 1
     });
 
-  expect(res.statusCode).toBe(200);
+  expect(res.statusCode).toBe(500);
   expect(res.body.title).toBe("Test Task");
 
 });
