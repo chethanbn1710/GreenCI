@@ -1,3 +1,5 @@
+console.log("Starting SmartCi..");
+
 const express = require("express");
 const cors = require("cors");
 
@@ -35,3 +37,5 @@ app.get("/jobs/completed", (req, res) => {
 app.listen(7000, () => {
   console.log("SmartCI running on port 7000");
 });
+
+setInterval(()=>{},1000);
