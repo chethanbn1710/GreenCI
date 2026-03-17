@@ -24,25 +24,29 @@ function scheduleJob(repo, branch, commit) {
   console.log("Job scheduled:", id);
 
   const repoUrl = `https://github.com/Prabhanjan-31/${repo}.git`;
-  const workspace = `workspace/job-${id}`;
+const workspace = path.join(__dirname, "..", "workspace", `job-${id}`);
 
-  fs.mkdirSync(workspace, { recursive: true });
+if (fs.existsSync(workspace)) {
+  fs.rmSync(workspace, { recursive: true, force: true });
+}
 
-  console.log("Cloning repository...");
+fs.mkdirSync(workspace, { recursive: true });
 
-  exec(`git clone ${repoUrl}`, { cwd: workspace }, (err, stdout, stderr) => {
+console.log("Cloning repository...");
 
-    if (err) {
-      console.log("Clone failed:", err);
-      job.status = "FAILED";
-      return;
-    }
+exec(`git clone ${repoUrl} .`, { cwd: workspace }, (err) => {
 
-    console.log("Repository cloned");
+  if (err) {
+    console.log("Clone failed:", err);
+    job.status = "FAILED";
+    return;
+  }
 
-    runPipeline(job, `${workspace}/${repo}`);
+  console.log("Repository cloned");
 
-  });
+  runPipeline(job, workspace);
+
+});
 
   return job;
 }
