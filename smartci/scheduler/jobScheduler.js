@@ -70,4 +70,4 @@ if (folders.length > 5) {
     fs.rmSync(fullPath, { recursive: true, force: true });
     console.log("Deleted old job:", folder);
   });
-}
+} 
