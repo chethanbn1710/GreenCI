@@ -68,8 +68,8 @@ function runPipeline(job, repoPath) {
 
 function runStages(job, repoPath, index) {
 
-  console.log(`Running: ${stage.command}`);
-  console.log("Stages:", job.stages);
+  
+ 
 
   if (index >= job.stages.length) {
     job.status = "COMPLETED";
@@ -78,6 +78,9 @@ function runStages(job, repoPath, index) {
   }
 
   const stage = job.stages[index];
+
+  console.log(`Running: ${stage.command}`);
+   console.log("Stages:", job.stages);
 
   stage.status = "RUNNING";
 
