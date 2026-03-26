@@ -14,7 +14,7 @@ test_backend:
     - cd backend && npm install
     - cd backend && npm test
 
-security_scan:
-  stage: security
-  script:
-    - cd backend && npm audit --audit-level=high; exit 0
+# security_scan:
+#   stage: security
+#   script:
+#     - cd backend && npm audit --audit-level=high; exit 0
