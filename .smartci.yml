@@ -1,17 +1,21 @@
 stages:
   - build
+  - install
   - test
-  - security
 
-build_backend:
+build:
   stage: build
   script:
     - cd backend && echo "Build step completed"
 
-test_backend:
-  stage: test
+install_dependencies:
+  stage: install
   script:
     - cd backend && npm install
+
+run_tests:
+  stage: test
+  script:
     - cd backend && npm test
 
 # security_scan:
