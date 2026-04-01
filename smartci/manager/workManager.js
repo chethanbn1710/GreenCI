@@ -1,3 +1,9 @@
+const runPipeline = require("../pipeline/pipelineManager");
+const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+
 const { getAvailableWorker, assignWorker, releaseWorker } = require("../workers/workerPool");
 const { getQueue } = require("../queue/jobQueue");
 const axios = require("axios");
@@ -5,31 +11,47 @@ const axios = require("axios");
 function executeJob(job, worker) {
   console.log(`Worker ${worker.id} started executing Job ${job.id}`);
 
-  // Simulate build
-  setTimeout(() => {
-    console.log(`Job ${job.id} → build`);
+  const repoUrl = job.clone_url;
+  const workspace = path.join(__dirname, "..", "workspace", `job-${job.id}`);
 
-    // Simulate test
-    setTimeout(() => {
-      console.log(`Job ${job.id} → test`);
+  // Clean old workspace
+  if (fs.existsSync(workspace)) {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
 
-      // Simulate scan
-      setTimeout(() => {
-        console.log(`Job ${job.id} → scan`);
+  fs.mkdirSync(workspace, { recursive: true });
 
-        // Finish job
-        job.status = "COMPLETED";
-        console.log(`Job ${job.id} COMPLETED`);
+  console.log(`Cloning repo for Job ${job.id}...`);
 
-        // Release worker
-        releaseWorker(worker);
-        console.log(`Worker ${worker.id} released`);
+  exec(`git clone ${repoUrl} .`, { cwd: workspace }, (err) => {
 
-      }, 2000);
+    if (err) {
+      console.log(`Clone failed for Job ${job.id}`);
+      job.status = "FAILED";
+      releaseWorker(worker);
+      return;
+    }
 
-    }, 2000);
+    console.log(`Repo cloned for Job ${job.id}`);
 
-  }, 2000);
+    // Run actual pipeline
+    runPipeline(job, workspace);
+
+    // 🔴 IMPORTANT: Release worker when pipeline finishes
+    monitorJobCompletion(job, worker);
+  });
+}
+
+function monitorJobCompletion(job, worker) {
+  const interval = setInterval(() => {
+
+    if (job.status === "COMPLETED" || job.status === "FAILED") {
+      console.log(`Releasing worker ${worker.id} for Job ${job.id}`);
+      releaseWorker(worker);
+      clearInterval(interval);
+    }
+
+  }, 1000);
 }
 
 
