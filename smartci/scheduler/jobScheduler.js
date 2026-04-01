@@ -3,20 +3,22 @@ const { addJob } = require("../queue/jobQueue");
 
 let jobId = 1;
 
-function scheduleJob(repo, branch, commit) {
+function scheduleJob(repo, branch, commit, languages_url, clone_url) {
 
   const id = jobId++;
 
   const job = {
-    id,
-    repo,
-    branch,
-    commit,
-    status: "QUEUED",
-    language: null,
-    workerId: null,
-    stages: []
-  };
+  id,
+  repo,
+  branch,
+  commit,
+  status: "QUEUED",
+  language: null,
+  workerId: null,
+  languages_url,
+  clone_url,
+  stages: []
+};
 
   // Store for dashboard
   jobs.push(job);
