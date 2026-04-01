@@ -1,7 +1,7 @@
 
 const express = require("express");
 const cors = require("cors");
-
+const { initWorkers } = require("./workers/workerPool");
 
 
 const webhookRoute = require("./routes/webhook");
@@ -35,6 +35,7 @@ app.get("/jobs/completed", (req, res) => {
 });
 
 startWorkManager();
+initWorkers();
 
 app.listen(7000, () => {
   console.log("SmartCI running on port 7000");
