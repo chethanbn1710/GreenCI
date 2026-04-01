@@ -27,7 +27,7 @@ app.get("/jobs/queued", (req, res) => {
 });
 
 app.get("/jobs/in-progress", (req, res) => {
-  res.json(jobs.filter(j => j.status === "IN_PROGRESS"));
+  res.json(jobs.filter(j => j.status === "RUNNING"));
 });
 
 app.get("/jobs/completed", (req, res) => {

@@ -39,7 +39,7 @@ h1 {
   padding: 10px;
   margin-top: 10px;
   border-radius: 6px;
-  border-left: 5px solid #4CAF50;
+  border-left: 5px solid gray;
 }
 
 .stage {
@@ -48,20 +48,15 @@ h1 {
   margin-top: 3px;
 }
 
-.running {
-  color: orange;
-}
+.running { color: orange; }
+.completed { color: green; }
+.pending { color: gray; }
+.failed { color: red; }
 
-.completed {
-  color: green;
-}
-
-.pending {
-  color: gray;
-}
-
-.failed {
-  color: red;
+.meta {
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #555;
 }
 
 </style>
@@ -70,7 +65,7 @@ h1 {
 
 <body>
 
-<h1>SmartCI Pipeline Dashboard</h1>
+<h1>🚀 SmartCI Pipeline Dashboard</h1>
 
 <div class="container">
 
@@ -80,7 +75,7 @@ h1 {
 </div>
 
 <div class="column">
-<h2>In Progress</h2>
+<h2>Running</h2>
 <div id="progress"></div>
 </div>
 
@@ -92,6 +87,13 @@ h1 {
 </div>
 
 <script>
+
+function getBorderColor(status) {
+  if (status === "RUNNING") return "orange";
+  if (status === "COMPLETED") return "green";
+  if (status === "FAILED") return "red";
+  return "gray";
+}
 
 async function loadJobs() {
 
@@ -106,38 +108,51 @@ async function loadJobs() {
 
     const div = document.createElement("div");
     div.className = "job";
+    div.style.borderLeft = `5px solid ${getBorderColor(job.status)}`;
 
     let stages = "";
 
-    if(job.stages){
-      job.stages.forEach(stage=>{
+    if (job.stages) {
+      job.stages.forEach(stage => {
+
         let className = "pending";
 
-if(stage.status === "RUNNING") className = "running";
-if(stage.status === "COMPLETED") className = "completed";
-if(stage.status === "FAILED") className = "failed";
+        if (stage.status === "RUNNING") className = "running";
+        if (stage.status === "COMPLETED") className = "completed";
+        if (stage.status === "FAILED") className = "failed";
 
-stages += `<div class="stage ${className}">
-${stage.name} (${stage.command}): ${stage.status}
-</div>`;
-      })
+        stages += `
+          <div class="stage ${className}">
+            ${stage.name} (${stage.command}): ${stage.status}
+          </div>
+        `;
+      });
     }
 
-    div.innerHTML =
-      `<b>Job #${job.id}</b><br>
-       Repo: ${job.repo}<br>
-       Branch: ${job.branch}<br>
-       ${stages}`;
+    div.innerHTML = `
+      <b>Job #${job.id}</b><br>
+      Repo: ${job.repo}<br>
+      Branch: ${job.branch}<br>
 
-    if(job.status === "QUEUED"){
+      <div class="meta">
+        🌐 Language: ${job.language || "N/A"}<br>
+        🧑‍💻 Worker: ${job.workerId || "Not Assigned"}<br>
+        📊 Status: ${job.status}
+      </div>
+
+      ${stages}
+    `;
+
+    // ✅ Updated status handling
+    if (job.status === "QUEUED" || job.status === "WAITING_FOR_WORKER") {
       document.getElementById("queued").appendChild(div);
     }
 
-    if(job.status === "IN_PROGRESS"){
+    if (job.status === "RUNNING") {
       document.getElementById("progress").appendChild(div);
     }
 
-    if(job.status === "COMPLETED"){
+    if (job.status === "COMPLETED") {
       document.getElementById("completed").appendChild(div);
     }
 
@@ -145,7 +160,7 @@ ${stage.name} (${stage.command}): ${stage.status}
 
 }
 
-setInterval(loadJobs,1000);
+setInterval(loadJobs, 1000);
 
 </script>
 
