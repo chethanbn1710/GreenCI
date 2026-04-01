@@ -4,22 +4,23 @@ function startWorkManager() {
   console.log("Work Manager started...");
 
   setInterval(() => {
-    const queue = getQueue();
+  const queue = getQueue();
 
-    if (queue.length === 0) return;
+  let didWork = false;
 
-    if (queue.length > 0) {
-  console.log("Checking queue...");
-}
+  queue.forEach(job => {
+    if (job.status === "QUEUED") {
+      console.log(`Job ${job.id} moved to WAITING_FOR_WORKER`);
+      job.status = "WAITING_FOR_WORKER";
+      didWork = true;
+    }
+  });
 
-    queue.forEach(job => {
-      if (job.status === "QUEUED") {
-        console.log(`Job ${job.id} moved to WAITING_FOR_WORKER`);
-        job.status = "WAITING_FOR_WORKER";
-      }
-    });
+  if (didWork) {
+    console.log("Queue processed");
+  }
 
-  }, 3000); // every 3 seconds
+}, 3000); // every 3 seconds
 }
 
 module.exports = startWorkManager;
