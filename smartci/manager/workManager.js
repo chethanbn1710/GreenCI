@@ -8,7 +8,9 @@ function startWorkManager() {
 
     if (queue.length === 0) return;
 
-    console.log("Checking queue...");
+    if (queue.length > 0) {
+  console.log("Checking queue...");
+}
 
     queue.forEach(job => {
       if (job.status === "QUEUED") {
