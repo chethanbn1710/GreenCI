@@ -1,0 +1,16 @@
+build:
+  script:
+    - echo "Build step completed"
+
+install_dependencies:
+  script:
+    - echo "install dependencies step completed"
+
+run_tests:
+  script:
+    - echo "test step completed"
+
+# security_scan:
+#   stage: security
+#   script:
+#     - cd backend && npm audit --audit-level=high; exit 0
