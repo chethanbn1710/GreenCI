@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 build:
   script:
     - echo "Build step completed"
@@ -14,21 +14,5 @@ run_tests:
 # security_scan:
 #   stage: security
 #   script:
-=======
-build:
-  script:
-    - echo "Build step completed"
 
-install_dependencies:
-  script:
-    - echo "install dependencies step completed"
-
-run_tests:
-  script:
-    - echo "test step completed"
-
-# security_scan:
-#   stage: security
-#   script:
->>>>>>> 491999a34badb2c6920255129ee6c6b762ad6cbf
 #     - cd backend && npm audit --audit-level=high; exit 0
