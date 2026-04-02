@@ -1,3 +1,8 @@
+<<<<<<< HEAD
 node_modules/
 workspace/
+=======
+node_modules/
+workspace/
+>>>>>>> 491999a34badb2c6920255129ee6c6b762ad6cbf
 .env
