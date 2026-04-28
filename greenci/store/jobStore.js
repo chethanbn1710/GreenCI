@@ -1,11 +1,9 @@
 const Job = require("../models/jobs.js")
 
-let nextJobId = 1
 
 /* ================= CREATE JOB ================= */
 async function createJob(payload) {
   const job = new Job({
-    id: nextJobId++,
     repo: payload.repo,
     branch: payload.branch,
     language: payload.language,
@@ -36,18 +34,18 @@ async function getAllJobs() {
 
 
 /* ================= UPDATE STATUS ================= */
-async function updateJobStatus(id, status) {
+async function updateJobStatus(_id, status) {
   await Job.updateOne(
-    { id },
+    { _id },
     { status }
   )
 }
 
 
 /* ================= ASSIGN WORKER ================= */
-async function assignWorkerToJob(id, workerId) {
+async function assignWorkerToJob(_id, workerId) {
   await Job.updateOne(
-    { id },
+    { _id },
     {
       workerId,
       startedAt: new Date(),
@@ -58,9 +56,9 @@ async function assignWorkerToJob(id, workerId) {
 
 
 /* ================= COMPLETE JOB ================= */
-async function completeJob(id) {
+async function completeJob(_id) {
   await Job.updateOne(
-    { id },
+    { _id },
     {
       status: "COMPLETED",
       completedAt: new Date()

@@ -31,7 +31,7 @@ async function scheduleJob(repo, branch, commit, languages_url, clone_url) {
   });
 
   addJob(job);
-  console.log("Job scheduled:", job.id);
+  console.log("Job scheduled:", job._id);
   return job;
 }
 

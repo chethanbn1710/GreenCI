@@ -22,10 +22,10 @@ function updateStage(job, stageName, status) {
 
 /* ================= EXECUTE JOB ================= */
 function executeJob(job, worker) {
-  console.log(`Worker ${worker.id} started executing Job ${job.id}`)
+  console.log(`Worker ${worker.id} started executing Job ${job._id}`)
   const repoUrl = job.clone_url
   const workspace =
-    path.join(__dirname, "..", "workspace", `job-${job.id}`)
+    path.join(__dirname, "..", "workspace", `job-${job._id}`)
 
   /* Clean old workspace */
   if (fs.existsSync(workspace)) {
@@ -35,7 +35,7 @@ function executeJob(job, worker) {
     })
   }
   fs.mkdirSync(workspace, { recursive: true })
-  console.log(`Cloning repo for Job ${job.id}...`)
+  console.log(`Cloning repo for Job ${job._id}...`)
 
 
   /* START CLONE STAGE */
@@ -44,14 +44,14 @@ function executeJob(job, worker) {
 
     if (err) {
       console.log("Clone error output:", stderr)
-      console.log(`Clone failed for Job ${job.id}`)
+      console.log(`Clone failed for Job ${job._id}`)
       updateStage(job, "clone", "FAILED")
       job.status = "FAILED"
       releaseWorker(worker)
       return
     }
 
-    console.log(`Repo cloned for Job ${job.id}`)
+    console.log(`Repo cloned for Job ${job._id}`)
     updateStage(job, "clone", "COMPLETED")
 
     /* Continue pipeline */
@@ -72,7 +72,7 @@ function monitorJobCompletion(job, worker) {
       job.status === "FAILED"
     ) {
       console.log(
-        `Releasing worker ${worker.id} for Job ${job.id}`
+        `Releasing worker ${worker.id} for Job ${job._id}`
       )
       releaseWorker(worker)
       clearInterval(interval)
@@ -135,7 +135,7 @@ function startWorkManager() {
       if (job.status === "QUEUED") {
         try {
           console.log(
-            `Fetching language for job ${job.id}...`
+            `Fetching language for job ${job._id}...`
           )
 
           const res =
@@ -162,19 +162,19 @@ function startWorkManager() {
           else
             job.language = "node"
           console.log(
-            `Job ${job.id} language: ${job.language}`
+            `Job ${job._id} language: ${job.language}`
           )
         }
         catch {
           console.log(
-            `Language detection failed for job ${job.id}, defaulting to node`
+            `Language detection failed for job ${job._id}, defaulting to node`
           )
           job.language = "node"
         }
 
         job.status = "WAITING_FOR_WORKER"
         console.log(
-          `Job ${job.id} moved to WAITING_FOR_WORKER`
+          `Job ${job._id} moved to WAITING_FOR_WORKER`
         )
       }
 
@@ -185,18 +185,18 @@ function startWorkManager() {
 
         if (!worker) {
           console.log(
-            `No worker available for job ${job.id} (${job.language})`
+            `No worker available for job ${job._id} (${job.language})`
           )
           continue
         }
-        assignWorker(worker, job.id)
+        assignWorker(worker, job._id)
 
         job.workerId = worker.id
         job.startedAt = new Date()
         job.status = "RUNNING"
 
         console.log(
-          `Job ${job.id} assigned to Worker ${worker.id} (${worker.type})`
+          `Job ${job._id} assigned to Worker ${worker.id} (${worker.type})`
         )
 
         executeJob(job, worker)
