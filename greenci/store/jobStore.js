@@ -66,20 +66,6 @@ async function completeJob(_id) {
   )
 }
 
-async function updateStage(jobId, stageIndex, update) {
-  const setObject = {}
-  if (update.status) {
-    setObject[`stages.${stageIndex}.status`] = update.status
-  }
-  if (update.logs) {
-    setObject[`stages.${stageIndex}.logs`] = update.logs
-  }
-  await Job.updateOne(
-    { _id: jobId },
-    { $set: setObject }
-  )
-}
-
 async function getQueuedJobs() {
   return await Job.find({
     status: { $in: ["QUEUED", "WAITING_FOR_WORKER"] }
@@ -92,6 +78,5 @@ module.exports = {
   updateJobStatus,
   assignWorkerToJob,
   completeJob,
-  updateStage,
   getQueuedJobs
 }
