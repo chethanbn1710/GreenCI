@@ -40,9 +40,10 @@ function executeJob(job, worker) {
 
   /* START CLONE STAGE */
   updateStage(job, "clone", "RUNNING")
-  exec(`git clone ${repoUrl} .`, { cwd: workspace }, (err) => {
+  exec(`git clone ${repoUrl} .`, { cwd: workspace }, (err, stdout, stderr) => {
 
     if (err) {
+      console.log("Clone error output:", stderr)
       console.log(`Clone failed for Job ${job.id}`)
       updateStage(job, "clone", "FAILED")
       job.status = "FAILED"
