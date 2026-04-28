@@ -3,6 +3,7 @@
 <head>
 
   <title>GreenCI Operations Grid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
@@ -10,6 +11,7 @@
       background: black;
       color: white;
       overflow-x: hidden;
+      height: 100vh;
     }
 
 
@@ -17,7 +19,9 @@
     #splash {
       position: fixed;
       inset: 0;
-      background: url("/images/splash.png") center/cover no-repeat;
+      background: url("/images/splash.png") center center no-repeat;
+      background-size: contain;
+      background-color: black;
       z-index: 9999;
       transition: opacity 1.8s ease;
     }
@@ -25,33 +29,26 @@
 
     /* ================= MAIN DASHBOARD ================= */
     #dashboard {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      background: url("/images/main_bg.png") center/cover no-repeat;
+      background: url("/images/main_bg.png") center center no-repeat;
+      background-size: contain;
+      background-color: black;
       opacity: 0;
+      background-position: center 28%;
       transition: 
         opacity 1.5s ease,
         background 1.2s ease;
     }
 
   
-    /* ================= TITLE ================= */
-    #title {
-      position: absolute;
-      top: 25px;
-      left: 40px;
-      font-size: 40px;
-      letter-spacing: 2px;
-      opacity: .9;
-    }
-
-
     /* ================= STATUS TILE ================= */
     #statusTile {
-      position: absolute;
+      position: fixed;
       top: 25px;
       right: 40px;
-      background: black;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(6px);
       padding: 14px 28px;
       border-radius: 12px;
       font-size: 15px;
@@ -60,7 +57,7 @@
 
     /* ================= JOB COUNTER TILE ================= */
     #totalJobsTile {
-      position: absolute;
+      position: fixed;
       bottom: 40px;
       left: 40px;
       background: black;
@@ -71,7 +68,7 @@
 
     /* ================= DETAIL BUTTON ================= */
     #detailBtn {
-      position: absolute;
+      position: fixed;
       bottom: 40px;
       right: 40px;
       background: black;
@@ -95,11 +92,12 @@
     /* ================= GRID ================= */
     .grid {
       position: absolute;
-      top: 50%;
+      top: 52%;
       left: 50%;
       transform: translate(-50%, -50%);
       display: flex;
       gap: 60px;
+      align-items: center;
     }
 
 
@@ -109,6 +107,8 @@
       height: 460px;
       border-radius: 16px;
       padding: 18px;
+      background-size: cover;
+      background-position: center;
       transition:
         transform 1s ease,
         opacity 1s ease,
@@ -132,7 +132,7 @@
 
 
     .detail-mode #dashboard{
-      background:url("/images/detail_bg.png") center/cover no-repeat;
+      background:url("/images/detail_bg.png") center/cover;
     }
     
     .detail-mode #queue{
@@ -181,11 +181,25 @@
       padding: 6px;
       border-radius: 6px;
     }
+
+    .stageLogs {
+      display: none;
+      margin-top: 6px;
+      font-size: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      color: #94a3b8;
+      border-left: 2px solid #1e293b;
+      padding-left: 6px;
+    }
+
+    .detail-mode .stageLogs {
+      display: block;
+    }
+
   </style>
 
 </head>
-
-
 
 <body>
 
@@ -197,10 +211,6 @@
   <!-- MAIN DASHBOARD -->
 
   <div id="dashboard">
-
-    <div id="title">
-      GREENCi OPERATIONS GRID
-    </div>
 
     <!-- STATUS TILE -->
     <div id="statusTile">
@@ -244,9 +254,6 @@
       </div>
     </div>
 
-    <div id="quote">
-      "If we don't fight, we can't win."
-    </div>
   </div>
 
 
@@ -296,7 +303,29 @@
         doneLogs.innerHTML = "";
 
         jobs.forEach(job => {
-          let log = `<div class="log">#${job.id} ${job.repo}</div>`;
+          let stageLogsHTML = ""
+
+        if (job.stages) {
+          job.stages.forEach(stage => {
+            stageLogsHTML += `
+
+          <div>
+              <b>${stage.name}</b> : ${stage.status}
+            <div class="stageLogs">
+              ${(stage.logs || []).join("<br>")}
+            </div>
+          </div>
+          `
+          })
+        }
+
+        let log = `
+          <div class="log">
+           #${job.id} ${job.repo}
+            ${stageLogsHTML}
+          </div>
+          `
+
           if (job.status === "QUEUED" || job.status === "WAITING_FOR_WORKER") {
             q++;
             queueLogs.insertAdjacentHTML("beforeend", log);

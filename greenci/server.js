@@ -4,7 +4,7 @@ const cors = require("cors");
 const workerPool = require("./workers/workerPool");
 
 const webhookRoute = require("./routes/webhook");
-const jobs = require("./store/jobStore");
+const jobStore = require("./store/jobStore");
 const startWorkManager = require("./manager/workManager");
 
 const app = express();
@@ -18,25 +18,25 @@ app.use("/webhook", webhookRoute);
 /* Dashboard APIs */
 
 app.get("/jobs", (req, res) => {
-  res.json(jobs);
+  res.json(jobStore.getAllJobs());
 });
 
 app.get("/jobs/queued", (req, res) => {
-  res.json(jobs.filter(j => j.status === "QUEUED"));
+  res.json(jobStore.getAllJobs().filter(j => j.status === "QUEUED"));
 });
 
 app.get("/jobs/in-progress", (req, res) => {
-  res.json(jobs.filter(j => j.status === "RUNNING"));
+  res.json(jobStore.getAllJobs().filter(j => j.status === "RUNNING"));
 });
 
 app.get("/jobs/completed", (req, res) => {
-  res.json(jobs.filter(j => j.status === "COMPLETED"));
+  res.json(jobStore.getAllJobs().filter(j => j.status === "COMPLETED"));
 });
 
 app.get("/workers", (req, res) => {
   const workers = workerPool.getAllWorkers()
   const availableWorkers =
-    workers.filter(w => w.status === "IDLE").length
+    workers.filter(w => !w.busy).length
   res.json({
     available: availableWorkers
   })
@@ -50,7 +50,7 @@ app.get("/server-status", (req, res) => {
 
 app.get("/stats", (req, res) => {
   res.json({
-    totalJobs: jobs.length
+    totalJobs: jobStore.getAllJobs().length
   });
 });
 

@@ -1,33 +1,37 @@
-const jobs = require("../store/jobStore");
+const jobStore = require("../store/jobStore")
 const { addJob } = require("../queue/jobQueue");
 
-let jobId = 1;
+async function detectLanguage(languages_url) {
 
-function scheduleJob(repo, branch, commit, languages_url, clone_url) {
+  try {
+    const response = await fetch(languages_url)
+    const data = await response.json()
 
-  const id = jobId++;
+    if (data.JavaScript) return "node"
+    if (data.Python) return "python"
+    if (data.Cpp || data["C++"]) return "cpp"
 
-  const job = {
-  id,
-  repo,
-  branch,
-  commit,
-  status: "QUEUED",
-  language: null,
-  workerId: null,
-  languages_url,
-  clone_url,
-  stages: []
-};
+    return "node"
+  } catch {
+    return "node"
+  }
+}
 
-  // Store for dashboard
-  jobs.push(job);
+async function scheduleJob(repo, branch, commit, languages_url, clone_url) {
 
-  // Add to queue
+  const cleanBranch = branch?.replace("refs/heads/", "");
+
+  const job = jobStore.createJob({
+    repo,
+    branch: cleanBranch,
+    language: await detectLanguage(languages_url),
+    commit,
+    languages_url,
+    clone_url
+  });
+
   addJob(job);
-
-  console.log("Job scheduled:", id);
-
+  console.log("Job scheduled:", job.id);
   return job;
 }
 
