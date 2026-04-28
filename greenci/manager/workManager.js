@@ -12,12 +12,32 @@ const jobStore = require("../store/jobStore")
 const axios = require("axios")
 
 
+/* ================= FORCE REMOVE DIR (Windows-safe) ================= */
+function forceRemoveDir(dirPath) {
+  if (!fs.existsSync(dirPath)) return
+
+  fs.readdirSync(dirPath).forEach((file) => {
+    const filePath = path.join(dirPath, file)
+    const stat = fs.lstatSync(filePath)
+
+    if (stat.isDirectory()) {
+      forceRemoveDir(filePath)
+    } else {
+      fs.chmodSync(filePath, 0o666)
+      fs.unlinkSync(filePath)
+    }
+  })
+
+  fs.rmdirSync(dirPath)
+}
+
+
 /* ================= STAGE UPDATE HELPER ================= */
 function updateStage(job, stageName, status) {
   const stage = job.stages.find(s => s.name === stageName)
   if (stage) {
     stage.status = status
-   }
+  }
 }
 
 /* ================= EXECUTE JOB ================= */
@@ -29,10 +49,7 @@ function executeJob(job, worker) {
 
   /* Clean old workspace */
   if (fs.existsSync(workspace)) {
-    fs.rmSync(workspace, {
-      recursive: true,
-      force: true
-    })
+    forceRemoveDir(workspace)  // ✅ Fixed: was fs.rmSync
   }
   fs.mkdirSync(workspace, { recursive: true })
   console.log(`Cloning repo for Job ${job._id}...`)
@@ -111,10 +128,7 @@ function cleanupWorkspaces() {
   toDelete.forEach(folder => {
     const fullPath =
       path.join(WORKSPACE_ROOT, folder)
-    fs.rmSync(fullPath, {
-      recursive: true,
-      force: true
-    })
+    forceRemoveDir(fullPath)  // ✅ Fixed: was fs.rmSync
     console.log("Deleted old workspace:", folder)
   })
 }
@@ -156,11 +170,11 @@ function startWorkManager() {
             job.language = "node"
           else if (dominant === "Python")
             job.language = "python"
-
           else if (dominant === "C++")
             job.language = "cpp"
           else
             job.language = "node"
+
           console.log(
             `Job ${job._id} language: ${job.language}`
           )
