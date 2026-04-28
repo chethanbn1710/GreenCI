@@ -1,8 +1,7 @@
 
 const express = require("express");
 const cors = require("cors");
-const { initWorkers } = require("./workers/workerPool");
-
+const workerPool = require("./workers/workerPool");
 
 const webhookRoute = require("./routes/webhook");
 const jobs = require("./store/jobStore");
@@ -34,8 +33,33 @@ app.get("/jobs/completed", (req, res) => {
   res.json(jobs.filter(j => j.status === "COMPLETED"));
 });
 
+app.get("/workers", (req, res) => {
+  const workers = workerPool.getAllWorkers()
+  const availableWorkers =
+    workers.filter(w => w.status === "IDLE").length
+  res.json({
+    available: availableWorkers
+  })
+})
+
+app.get("/server-status", (req, res) => {
+  res.json({
+    online: true
+  });
+});
+
+app.get("/stats", (req, res) => {
+  res.json({
+    totalJobs: jobs.length
+  });
+});
+
 startWorkManager();
-initWorkers();
+workerPool.initWorkers();
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/dashboard.html");
+});
 
 app.listen(7000, () => {
   console.log("GreenCI running on port 7000");
