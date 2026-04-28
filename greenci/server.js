@@ -38,5 +38,5 @@ startWorkManager();
 initWorkers();
 
 app.listen(7000, () => {
-  console.log("SmartCI running on port 7000");
+  console.log("GreenCI running on port 7000");
 });

@@ -5,11 +5,11 @@ const { exec } = require("child_process");
 /* =========================
    PARSE YAML WITH STAGE NAMES
 ========================= */
-function parseSmartCI(repoPath) {
-  const filePath = path.join(repoPath, ".smartci.yml");
+function parseGreenCI(repoPath) {
+  const filePath = path.join(repoPath, ".greenci.yml");
 
   if (!fs.existsSync(filePath)) {
-    console.log("No .smartci.yml found");
+    console.log("No .greenci.yml found");
     return [];
   }
 
@@ -64,7 +64,7 @@ function runPipeline(job, repoPath) {
 
   job.status = "IN_PROGRESS";
 
-  const parsedStages = parseSmartCI(repoPath);
+  const parsedStages = parseGreenCI(repoPath);
 
   // fallback if no YAML
   if (parsedStages.length === 0) {

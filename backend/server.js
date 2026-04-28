@@ -74,7 +74,7 @@ app.post("/signup", async (req, res) => {
 
 const jwt = require("jsonwebtoken");
 
-const SECRET = "smartci-secret";
+const SECRET = "greenci-secret";
 
 /* User login */
 app.post("/login", (req, res) => {
@@ -100,7 +100,7 @@ app.post("/login", (req, res) => {
         return res.status(401).json({ message: "Invalid password" });
       }
 
-      const token = jwt.sign({ id: user.id }, "smartci-secret");
+      const token = jwt.sign({ id: user.id }, "greenci-secret");
 
       res.json({ token });
 
