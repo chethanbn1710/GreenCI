@@ -54,9 +54,6 @@ function parseGreenCI(repoPath) {
         command
       })
     }
-    if (insideScript && trimmed === "") {
-      insideScript = false
-    }
   })
   return stages
 }
