@@ -1,4 +1,6 @@
 
+const connectDB = require("./database/connect");
+
 const express = require("express");
 const cors = require("cors");
 const workerPool = require("./workers/workerPool");
@@ -53,6 +55,8 @@ app.get("/stats", (req, res) => {
     totalJobs: jobStore.getAllJobs().length
   });
 });
+
+connectDB();
 
 startWorkManager();
 workerPool.initWorkers();
