@@ -8,7 +8,7 @@ const {
   assignWorker,
   releaseWorker
 } = require("../workers/workerPool")
-const { getQueue } = require("../queue/jobQueue")
+const jobStore = require("../store/jobStore")
 const axios = require("axios")
 
 
@@ -126,7 +126,7 @@ function startWorkManager() {
   console.log("Work Manager started...")
 
   setInterval(async () => {
-    const queue = getQueue()
+    const queue = await jobStore.getQueuedJobs()
 
     for (let i = 0; i < queue.length; i++) {
       const job = queue[i]
