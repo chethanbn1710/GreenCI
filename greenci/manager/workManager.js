@@ -132,7 +132,7 @@ function startWorkManager() {
       const job = queue[i]
 
       /* STEP 1: LANGUAGE DETECTION */
-      if (job.status === "QUEUED") {
+      if (job.status === "QUEUED" && !job.language) {
         try {
           console.log(
             `Fetching language for job ${job._id}...`
@@ -172,14 +172,17 @@ function startWorkManager() {
           job.language = "node"
         }
 
-        job.status = "WAITING_FOR_WORKER"
+        await jobStore.updateJobStatus(
+          job._id,
+          "WAITING_FOR_WORKER"
+        )
         console.log(
           `Job ${job._id} moved to WAITING_FOR_WORKER`
         )
       }
 
       /* STEP 2: WORKER ASSIGNMENT */
-      if (job.status === "WAITING_FOR_WORKER") {
+      if (job.status === "WAITING_FOR_WORKER" && !job.workerId) {
         const worker =
           getAvailableWorker(job.language)
 
