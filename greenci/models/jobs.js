@@ -2,6 +2,7 @@ const mongoose = require("mongoose")
 
 const StageSchema = new mongoose.Schema({
   name: String,
+  command: String,
   status: String,
   logs: [String]
 })
