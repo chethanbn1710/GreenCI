@@ -21,7 +21,7 @@ async function scheduleJob(repo, branch, commit, languages_url, clone_url) {
 
   const cleanBranch = branch?.replace("refs/heads/", "");
 
-  const job = jobStore.createJob({
+  const job = await jobStore.createJob({
     repo,
     branch: cleanBranch,
     language: await detectLanguage(languages_url),

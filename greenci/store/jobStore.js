@@ -1,9 +1,10 @@
+const Job = require("../models/jobs.js")
+
 let nextJobId = 1
-const jobs = []
 
-
-function createJob(payload) {
-  const job = {
+/* ================= CREATE JOB ================= */
+async function createJob(payload) {
+  const job = new Job({
     id: nextJobId++,
     repo: payload.repo,
     branch: payload.branch,
@@ -17,61 +18,60 @@ function createJob(payload) {
     completedAt: null,
     workerId: null,
     stages: [
-      { name: "clone", status: "WAITING" },
-      { name: "install", status: "WAITING" },
-      { name: "build", status: "WAITING" },
-      { name: "test", status: "WAITING" }
+      { name: "clone", status: "WAITING", logs: [] },
+      { name: "install", status: "WAITING", logs: [] },
+      { name: "build", status: "WAITING", logs: [] },
+      { name: "test", status: "WAITING", logs: [] }
     ]
-  }
-
-  jobs.push(job)
+  })
+  await job.save()
   return job
 }
 
 
-function getAllJobs() {
-  return jobs
+/* ================= GET ALL JOBS ================= */
+async function getAllJobs() {
+  return await Job.find().sort({ createdAt: -1 })
 }
 
 
-function getJobById(id) {
-  return jobs.find(job => job.id === id)
+/* ================= UPDATE STATUS ================= */
+async function updateJobStatus(id, status) {
+  await Job.updateOne(
+    { id },
+    { status }
+  )
 }
 
 
-function updateJobStatus(id, status) {
-  const job = getJobById(id)
-  if (!job) return null
-  job.status = status
-  return job
+/* ================= ASSIGN WORKER ================= */
+async function assignWorkerToJob(id, workerId) {
+  await Job.updateOne(
+    { id },
+    {
+      workerId,
+      startedAt: new Date(),
+      status: "RUNNING"
+    }
+  )
 }
 
 
-function assignWorkerToJob(id, workerId) {
-  const job = getJobById(id)
-  if (!job) return null
-  job.workerId = workerId
-  job.startedAt = new Date()
-  job.status = "RUNNING"
-  return job
+/* ================= COMPLETE JOB ================= */
+async function completeJob(id) {
+  await Job.updateOne(
+    { id },
+    {
+      status: "COMPLETED",
+      completedAt: new Date()
+    }
+  )
 }
-
-
-function completeJob(id) {
-  const job = getJobById(id)
-  if (!job) return null
-  job.status = "COMPLETED"
-  job.completedAt = new Date()
-  return job
-}
-
 
 module.exports = {
   createJob,
   getAllJobs,
-  getJobById,
   updateJobStatus,
   assignWorkerToJob,
   completeJob
-
 }

@@ -19,20 +19,20 @@ app.use("/webhook", webhookRoute);
 
 /* Dashboard APIs */
 
-app.get("/jobs", (req, res) => {
-  res.json(jobStore.getAllJobs());
+app.get("/jobs", async (req, res) => {
+  res.json(await jobStore.getAllJobs());
 });
 
-app.get("/jobs/queued", (req, res) => {
-  res.json(jobStore.getAllJobs().filter(j => j.status === "QUEUED"));
+app.get("/jobs/queued", async (req, res) => {
+  res.json((await jobStore.getAllJobs()).filter(j => j.status === "QUEUED"));
 });
 
-app.get("/jobs/in-progress", (req, res) => {
-  res.json(jobStore.getAllJobs().filter(j => j.status === "RUNNING"));
+app.get("/jobs/in-progress", async (req, res) => {
+  res.json((await jobStore.getAllJobs()).filter(j => j.status === "RUNNING"));
 });
 
-app.get("/jobs/completed", (req, res) => {
-  res.json(jobStore.getAllJobs().filter(j => j.status === "COMPLETED"));
+app.get("/jobs/completed", async (req, res) => {
+  res.json((await jobStore.getAllJobs()).filter(j => j.status === "COMPLETED"));
 });
 
 app.get("/workers", (req, res) => {
