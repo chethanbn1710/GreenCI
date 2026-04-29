@@ -50,44 +50,6 @@ function parseGreenCI(repoPath) {
   return stages
 }
 
-
-/* =========================
-   PIPELINE EXECUTION
-========================= */
-
-async function runPipeline(job, repoPath) {
-  job.status = "RUNNING"
-  await job.save()
-  
-  const parsedStages = parseGreenCI(repoPath)
-
-  if (parsedStages.length === 0) {
-    console.log("Using default stages")
-    parsedStages.push({
-      name: "install",
-      command: "npm install"
-    })
-    parsedStages.push({
-      name: "build",
-      command: "npm run build"
-    })
-    parsedStages.push({
-      name: "test",
-      command: "npm test"
-    })
-  }
-
-  parsedStages.forEach((parsedStage, i) => {
-    if (job.stages[i]) {
-      job.stages[i].command = parsedStage.command
-    }
-  })
-  
-  await job.save() 
-  runStages(job, repoPath, 0)
-}
-
-
 /* =========================
    RUN STAGES SEQUENTIALLY
 ========================= */
@@ -109,10 +71,12 @@ async function runStages(job, repoPath, index) {
 
   const stage = job.stages[index]
   
-  // ✅ Skip stages without commands
+  // ✅ Skip stages without commands and mark them as SKIPPED
   if (!stage.command) {
     console.log(`Skipping stage ${stage.name} - no command defined`)
-    runStages(job, repoPath, index + 1)
+    stage.status = "SKIPPED"  // ✅ Mark as SKIPPED instead of leaving it RUNNING
+    await job.save()
+    runStages(job, repoPath, index + 1)  // Continue to next stage
     return
   }
 
