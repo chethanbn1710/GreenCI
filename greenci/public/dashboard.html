@@ -23,7 +23,7 @@
       background-size: contain;
       background-color: black;
       z-index: 9999;
-      transition: opacity 1.8s ease;
+      transition: opacity 1s ease;
     }
 
 
@@ -92,29 +92,31 @@
     /* ================= GRID ================= */
     .grid {
       position: absolute;
-      top: 52%;
+      top: 67%;
       left: 50%;
       transform: translate(-50%, -50%);
       display: flex;
-      gap: 60px;
+      gap: 90px;
       align-items: center;
     }
 
 
     /* ================= CARDS ================= */
     .card {
-      width: 260px;
-      height: 460px;
+      width: 180px;
+      height: 330px;
       border-radius: 16px;
       padding: 18px;
       background-size: cover;
       background-position: center;
+      position: relative;
       transition:
         transform 1s ease,
         opacity 1s ease,
         background 1.2s ease;
       opacity: 0;
       transform: translateY(100px);
+      overflow:hidden;
     }
 
     /* placeholders for your tile artwork */
@@ -147,6 +149,12 @@
       background:url("/images/detail_tiles/done.png") center/cover;
     }
 
+    .detail-mode #statusTile,
+.detail-mode #totalJobsTile,
+.detail-mode #detailBtn {
+  display: none;
+}
+
     /* animate entry */
     .show {
       opacity: 1;
@@ -156,46 +164,75 @@
 
     /* ================= COUNTS ================= */
     .count {
-      font-size: 24px;
-      margin-top: 12px;
+      font-size: 65px;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: red;
+      display: block;
+    }
+
+    .detail-mode .count {
+      display: none;
     }
 
 
-    /* ================= DETAIL MODE ================= */
-    .detail-mode .grid {
-      gap: 30px;
-    }
+  /* ================= DETAIL MODE ================= */
+.detail-mode .grid {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  gap: 40px; /* Reduced gap */
+  padding: 0;
+  max-height: 95vh; /* Leave some breathing room */
+  max-width: 95vw; /* Prevent horizontal overflow */
+  overflow: visible; /* Let cards handle their own scrolling */
+}
 
 
-    .detail-mode .card {
-      height: 70vh;
-      overflow-y: auto;
-    }
+.detail-mode .card {
+  width: 420px; /* Slightly smaller width */
+  height: 85vh; /* Reduced height to fit screen */
+  overflow-y: auto;
+  flex-shrink: 0; /* Prevent cards from shrinking */
+}
 
 
     /* ================= LOG STYLE ================= */
-    .log {
-      font-size: 12px;
-      margin-top: 10px;
-      background: rgba(0, 0, 0, .5);
-      padding: 6px;
-      border-radius: 6px;
-    }
+.log {
+  font-size: 11px;
+  margin-top: 4px; /* Small gap between logs */
+  margin-bottom: 0;
+  background: rgba(0, 0, 0, .5);
+  padding: 6px;
+  border-radius: 6px;
+  display: none;
+}
 
-    .stageLogs {
-      display: none;
-      margin-top: 6px;
-      font-size: 10px;
-      max-height: 120px;
-      overflow-y: auto;
-      color: #94a3b8;
-      border-left: 2px solid #1e293b;
-      padding-left: 6px;
-    }
+.log:first-of-type {
+  margin-top: 150px;
+}
 
-    .detail-mode .stageLogs {
-      display: block;
-    }
+.stageLogs {
+  margin-top: 4px; /* Gap between the log header and stage logs */
+  font-size: 9px;
+  max-height: 80px;
+  overflow-y: auto;
+  color: #94a3b8;
+  border-left: 2px solid #1e293b;
+  padding-left: 6px;
+  line-height: 1.3;
+}
+
+.detail-mode .log {
+  display: block;
+}
+
+.detail-mode .stageLogs {
+  display: block;
+}
 
   </style>
 
@@ -236,19 +273,16 @@
     <!-- JOB CARDS -->
     <div class="grid">
       <div id="queue" class="card">
-        QUEUE
         <div class="count" id="queueCount">0</div>
         <div id="queueLogs"></div>
       </div>
 
       <div id="active" class="card">
-        ACTIVE
         <div class="count" id="activeCount">0</div>
         <div id="activeLogs"></div>
       </div>
 
       <div id="done" class="card">
-        DONE
         <div class="count" id="doneCount">0</div>
         <div id="doneLogs"></div>
       </div>

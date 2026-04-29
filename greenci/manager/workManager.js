@@ -107,9 +107,6 @@ function cleanupWorkspaces() {
 
 
 /* ================= IN-MEMORY LOCK SET ================= */
-/* Tracks job IDs currently being processed so the next
-   poll tick cannot pick them up again before MongoDB
-   reflects the new status                               */
 const processingJobs = new Set()
 
 
