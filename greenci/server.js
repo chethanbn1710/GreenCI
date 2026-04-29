@@ -5,6 +5,8 @@ const express = require("express");
 const cors = require("cors");
 const workerPool = require("./workers/workerPool");
 
+const Job = require("./models/jobs");
+
 const webhookRoute = require("./routes/webhook");
 const jobStore = require("./store/jobStore");
 const startWorkManager = require("./manager/workManager");
@@ -50,10 +52,13 @@ app.get("/server-status", (req, res) => {
   });
 });
 
-app.get("/stats", (req, res) => {
-  res.json({
-    totalJobs: jobStore.getAllJobs().length
-  });
+app.get("/stats", async (req, res) => {
+  try {
+    const totalJobs = await Job.countDocuments();
+    res.json({ totalJobs });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
 });
 
 connectDB();

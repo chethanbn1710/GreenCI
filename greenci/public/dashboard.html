@@ -15,18 +15,6 @@
     }
 
 
-    /* ================= SPLASH SCREEN ================= */
-    #splash {
-      position: fixed;
-      inset: 0;
-      background: url("/images/splash.png") center center no-repeat;
-      background-size: contain;
-      background-color: black;
-      z-index: 9999;
-      transition: opacity 1s ease;
-    }
-
-
     /* ================= MAIN DASHBOARD ================= */
     #dashboard {
       position: fixed;
@@ -34,11 +22,12 @@
       background: url("/images/main_bg.png") center center no-repeat;
       background-size: contain;
       background-color: black;
-      opacity: 0;
+      opacity: 1;
+      transition: opacity 0.8s ease;
       background-position: center 28%;
       transition: 
-        opacity 1.5s ease,
-        background 1.2s ease;
+        opacity 0.6s ease,
+        background 0.8s ease;
     }
 
   
@@ -59,7 +48,7 @@
     #totalJobsTile {
       position: fixed;
       bottom: 40px;
-      left: 40px;
+      left: 20px;
       background: black;
       padding: 15px 28px;
       border-radius: 12px;
@@ -186,19 +175,26 @@
   transform: translate(-50%, -50%);
   gap: 40px; /* Reduced gap */
   padding: 0;
-  max-height: 95vh; /* Leave some breathing room */
-  max-width: 95vw; /* Prevent horizontal overflow */
-  overflow: visible; /* Let cards handle their own scrolling */
+  max-height: 95vh; 
+  max-width: 95vw; 
 }
 
 
 .detail-mode .card {
-  width: 420px; /* Slightly smaller width */
-  height: 85vh; /* Reduced height to fit screen */
-  overflow-y: auto;
-  flex-shrink: 0; /* Prevent cards from shrinking */
+  width: 420px;
+  height: 85vh;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
+#queueLogs,
+#activeLogs,
+#doneLogs {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
 
     /* ================= LOG STYLE ================= */
 .log {
@@ -208,10 +204,13 @@
   background: rgba(0, 0, 0, .5);
   padding: 6px;
   border-radius: 6px;
+  overflow: visible; /* Let cards handle their own scrolling */
   display: none;
 }
 
-.log:first-of-type {
+#queueLogs,
+#activeLogs,
+#doneLogs {
   margin-top: 150px;
 }
 
@@ -239,11 +238,6 @@
 </head>
 
 <body>
-
-
-  <!-- SPLASH -->
-
-  <div id="splash"></div>
 
   <!-- MAIN DASHBOARD -->
 
@@ -293,15 +287,10 @@
 
   <script>
 
-    /* ================= SPLASH TRANSITION ================= */
-    setTimeout(() => {
-      document.getElementById("splash").style.opacity = 0;
-      setTimeout(() => {
-        document.getElementById("splash").remove();
-        document.getElementById("dashboard").style.opacity = 1;
-        animateCards();
-      }, 1800);
-    }, 3000);
+    window.addEventListener("load", () => {
+  document.getElementById("dashboard").style.opacity = 1;
+  animateCards();
+});
 
     function animateCards() {
       const queueCard = document.getElementById("queue")
@@ -309,8 +298,8 @@
       const doneCard = document.getElementById("done")
 
       setTimeout(() => queueCard.classList.add("show"), 400)
-      setTimeout(() => activeCard.classList.add("show"), 900)
-      setTimeout(() => doneCard.classList.add("show"), 1400)
+      setTimeout(() => activeCard.classList.add("show"), 500)
+      setTimeout(() => doneCard.classList.add("show"), 600)
     }
 
 
