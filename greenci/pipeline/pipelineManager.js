@@ -95,20 +95,33 @@ async function runPipeline(job, repoPath) {
 ========================= */
 
 async function runStages(job, repoPath, index) {
+  // Skip "clone" stage as it's already handled
+  while (index < job.stages.length && job.stages[index].name === "clone") {
+    index++
+  }
+
   if (index >= job.stages.length) {
     job.status = "COMPLETED"
     job.completedAt = new Date()
-    await job.save() // ✅ Save completion
+    await job.save()
 
     console.log("Pipeline completed")
     return
   }
 
   const stage = job.stages[index]
+  
+  // ✅ Skip stages without commands
+  if (!stage.command) {
+    console.log(`Skipping stage ${stage.name} - no command defined`)
+    runStages(job, repoPath, index + 1)
+    return
+  }
+
   console.log(`Running: ${stage.name} → ${stage.command}`)
 
   stage.status = "RUNNING"
-  await job.save() // ✅ Save stage status change
+  await job.save()
   
   const child = exec(stage.command, { cwd: repoPath })
 
@@ -120,21 +133,21 @@ async function runStages(job, repoPath, index) {
     stage.logs.push(data.toString())
   })
 
-  child.on("close", async (code) => { // ✅ Make async
+  child.on("close", async (code) => {
     if (code !== 0) {
       stage.status = "FAILED"
       job.status = "FAILED"
       job.completedAt = new Date()
       stage.logs.push("Stage exited with error code: " + code)
       
-      await job.save() // ✅ Save failure state
+      await job.save()
       
       console.log("Stage failed:", stage.name)
       return
     }
 
     stage.status = "COMPLETED"
-    await job.save() // ✅ Save stage completion
+    await job.save()
 
     runStages(job, repoPath, index + 1)
   })
