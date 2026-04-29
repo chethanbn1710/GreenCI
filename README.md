@@ -99,14 +99,5 @@ The dashboard is available at `greenci/public/dashboard.html` and displays job q
 ## Images & Assets
 
 - Dashboard and detail tiles are in `greenci/public/images/`
-- Custom splash and background images for the dashboard
+- Custom background images for the dashboard
 
-## Contributing
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Create a new Pull Request
-
----
