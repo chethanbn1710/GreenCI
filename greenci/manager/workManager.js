@@ -2,6 +2,7 @@ const runPipeline = require("../pipeline/pipelineManager")
 const { exec } = require("child_process")
 const fs = require("fs")
 const path = require("path")
+const Job = require("../models/jobs.js")
 
 const {
   getAvailableWorker,
@@ -24,16 +25,21 @@ function forceRemoveDir(dirPath) {
 
 
 /* ================= STAGE UPDATE HELPER ================= */
-function updateStage(job, stageName, status) {
-  const stage = job.stages.find(s => s.name === stageName)
-  if (stage) {
-    stage.status = status
+async function updateStage(jobId, stageName, status) {
+  try {
+    await Job.updateOne(
+      { _id: jobId, "stages.name": stageName },
+      { $set: { "stages.$.status": status } }
+    )
+    console.log(`Stage ${stageName} → ${status} for job ${jobId}`)
+  } catch (err) {
+    console.error(`Failed to update stage ${stageName}:`, err)
   }
 }
 
 
 /* ================= EXECUTE JOB ================= */
-function executeJob(job, worker) {
+async function executeJob(job, worker) {
   console.log(`Worker ${worker.id} started executing Job ${job._id}`)
   const repoUrl = job.clone_url
   const workspace = path.join(__dirname, "..", "workspace", `job-${job._id}`)
@@ -46,24 +52,25 @@ function executeJob(job, worker) {
   console.log(`Cloning repo for Job ${job._id}...`)
 
   /* START CLONE STAGE */
-  updateStage(job, "clone", "RUNNING")
+  await updateStage(job._id, "clone", "RUNNING")
 
   exec(`git clone ${repoUrl} .`, { cwd: workspace }, async (err, stdout, stderr) => {
     if (err) {
       console.log("Clone error output:", stderr)
       console.log(`Clone failed for Job ${job._id}`)
-      updateStage(job, "clone", "FAILED")
-      job.status = "FAILED"
+      await updateStage(job._id, "clone", "FAILED")
       await jobStore.updateJobStatus(job._id, "FAILED")
       releaseWorker(worker)
       return
     }
 
     console.log(`Repo cloned for Job ${job._id}`)
-    updateStage(job, "clone", "COMPLETED")
+    await updateStage(job._id, "clone", "COMPLETED")
 
-    runPipeline(job, workspace)
-    monitorJobCompletion(job, worker)
+    // Fetch fresh job document from DB before running pipeline
+    const freshJob = await Job.findById(job._id)
+    await runPipeline(freshJob, workspace)
+    monitorJobCompletion(freshJob, worker)
   })
 }
 
@@ -71,12 +78,11 @@ function executeJob(job, worker) {
 /* ================= MONITOR PIPELINE COMPLETION ================= */
 function monitorJobCompletion(job, worker) {
   const interval = setInterval(async () => {
-    if (job.status === "COMPLETED" || job.status === "FAILED") {
+    // Refresh job status from DB
+    const freshJob = await Job.findById(job._id)
+    
+    if (freshJob.status === "COMPLETED" || freshJob.status === "FAILED") {
       console.log(`Releasing worker ${worker.id} for Job ${job._id}`)
-
-      /* Persist final status to DB */
-      await jobStore.updateJobStatus(job._id, job.status)
-
       releaseWorker(worker)
       clearInterval(interval)
       cleanupWorkspaces()
@@ -121,7 +127,7 @@ function startWorkManager() {
       const job = queue[i]
       const jobId = job._id.toString()
 
-      /* ✅ Skip if already being handled in a previous tick */
+      /* Skip if already being handled in a previous tick */
       if (processingJobs.has(jobId)) continue
 
       /* STEP 1: LANGUAGE DETECTION */
@@ -182,21 +188,16 @@ function startWorkManager() {
         job.startedAt = new Date()
         job.status = "RUNNING"
 
-        /* ✅ Persist RUNNING to DB immediately — this is the critical fix.
-           Without this, the next poll sees WAITING_FOR_WORKER and
-           assigns the same job to a second worker.                    */
         await jobStore.assignWorkerToJob(jobId, worker.id)
 
         console.log(`Job ${jobId} assigned to Worker ${worker.id} (${worker.type})`)
 
-        executeJob(job, worker)
+        await executeJob(job, worker)
 
         /* Job is now RUNNING — remove from local queue slice */
         queue.splice(i, 1)
         i--
 
-        /* Keep in processingJobs until pipeline finishes.
-           monitorJobCompletion will clean it up.           */
         monitorAndUnlock(job, worker, jobId)
       }
     }
@@ -207,11 +208,13 @@ function startWorkManager() {
 /* ================= MONITOR + UNLOCK ================= */
 function monitorAndUnlock(job, worker, jobId) {
   const interval = setInterval(async () => {
-    if (job.status === "COMPLETED" || job.status === "FAILED") {
+    // Refresh from DB
+    const freshJob = await Job.findById(jobId)
+    
+    if (freshJob && (freshJob.status === "COMPLETED" || freshJob.status === "FAILED")) {
       console.log(`Releasing worker ${worker.id} for Job ${jobId}`)
-      await jobStore.updateJobStatus(jobId, job.status)
       releaseWorker(worker)
-      processingJobs.delete(jobId)   // ✅ Unlock — job is fully done
+      processingJobs.delete(jobId)
       clearInterval(interval)
       cleanupWorkspaces()
     }
