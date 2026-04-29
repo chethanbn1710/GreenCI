@@ -57,7 +57,7 @@ function parseGreenCI(repoPath) {
 
 async function runPipeline(job, repoPath) {
   job.status = "RUNNING"
-  await job.save() // ✅ Save status change
+  await job.save()
   
   const parsedStages = parseGreenCI(repoPath)
 
@@ -77,15 +77,13 @@ async function runPipeline(job, repoPath) {
     })
   }
 
-  // ✅ UPDATE existing stages instead of replacing them
   parsedStages.forEach((parsedStage, i) => {
     if (job.stages[i]) {
       job.stages[i].command = parsedStage.command
-      // Don't reset status - it's already "WAITING" from creation
     }
   })
   
-  await job.save() // ✅ Save updated stages
+  await job.save() 
   runStages(job, repoPath, 0)
 }
 
