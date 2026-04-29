@@ -115,4 +115,31 @@ async function runStages(job, repoPath, index) {
   })
 }
 
+/* =========================
+   MAIN PIPELINE RUNNER
+========================= */
+
+async function runPipeline(job, repoPath) {
+  const stages = parseGreenCI(repoPath)
+  
+  if (stages.length === 0) {
+    job.status = "FAILED"
+    job.completedAt = new Date()
+    await job.save()
+    console.log("No stages found in .greenci.yml")
+    return
+  }
+
+  job.stages = stages.map(stage => ({
+    name: stage.name,
+    command: stage.command,
+    status: "PENDING",
+    logs: []
+  }))
+  
+  await job.save()
+  
+  await runStages(job, repoPath, 0)
+}
+
 module.exports = runPipeline
