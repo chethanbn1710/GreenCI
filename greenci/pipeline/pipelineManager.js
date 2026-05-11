@@ -71,12 +71,11 @@ async function runStages(job, repoPath, index) {
 
   const stage = job.stages[index]
   
-  // ✅ Skip stages without commands and mark them as SKIPPED
   if (!stage.command) {
     console.log(`Skipping stage ${stage.name} - no command defined`)
-    stage.status = "SKIPPED"  // ✅ Mark as SKIPPED instead of leaving it RUNNING
+    stage.status = "SKIPPED"  
     await job.save()
-    runStages(job, repoPath, index + 1)  // Continue to next stage
+    runStages(job, repoPath, index + 1) 
     return
   }
 
