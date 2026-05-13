@@ -12,21 +12,25 @@ function initWorkers() {
       currentJobId: null
     });
 
-  // Python worker (1)
+  // Python worker (2)
+  for (let i = 0; i < 2; i++) {
     workers.push({
       id: id++,
       type: "python",
       busy: false,
       currentJobId: null
     });
+  }
 
-  // C++ worker (1)
-  workers.push({
-    id: id++,
-    type: "cpp",
-    busy: false,
-    currentJobId: null
-  });
+  // C++ worker (2)
+  for (let i = 0; i < 2; i++) {
+    workers.push({
+      id: id++,
+      type: "cpp",
+      busy: false,
+      currentJobId: null
+    });
+  }
 
   console.log("Workers initialized:", workers);
 }
