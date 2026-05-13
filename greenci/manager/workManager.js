@@ -3,6 +3,7 @@ const { exec } = require("child_process")
 const fs = require("fs")
 const path = require("path")
 const Job = require("../models/jobs.js")
+const calculatePriority = require("../scheduler/calculatePriority")
 
 const {
   getAvailableWorker,
@@ -144,6 +145,10 @@ function startWorkManager() {
 
   setInterval(async () => {
     const queue = await jobStore.getQueuedJobs()
+
+    queue.sort(
+      (a, b) => calculatePriority(b) - calculatePriority(a)
+    )
 
     for (let i = 0; i < queue.length; i++) {
       const job = queue[i]
