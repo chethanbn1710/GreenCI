@@ -1,15 +1,16 @@
 const fs = require("fs")
 const path = require("path")
 const { exec } = require("child_process")
-const Job = require("../models/jobs.js") // ✅ ADD THIS
+const Job = require("../models/jobs.js")
 
+const analyzeChanges = require("./analyzeChanges")
 
 /* =========================
    PARSE YAML WITH STAGE NAMES
 ========================= */
-
 function parseGreenCI(repoPath) {
-  const filePath = path.join(repoPath, ".greenci.yml")
+  const filePath =
+    path.join(repoPath, ".greenci.yml")
 
   if (!fs.existsSync(filePath)) {
     console.log("No .greenci.yml found")
@@ -17,6 +18,7 @@ function parseGreenCI(repoPath) {
   }
 
   const content = fs.readFileSync(filePath, "utf-8")
+
   const lines = content.split("\n")
   const stages = []
 
@@ -27,11 +29,14 @@ function parseGreenCI(repoPath) {
     const trimmed = line.trim()
 
     if (
-      !line.startsWith(" ") &&
-      trimmed.endsWith(":") &&
+      !line.startsWith(" ")
+      &&
+      trimmed.endsWith(":")
+      &&
       !trimmed.startsWith("stages")
     ) {
-      currentStageName = trimmed.replace(":", "")
+      currentStageName =
+        trimmed.replace(":", "")
     }
 
     if (trimmed.startsWith("script:")) {
@@ -39,8 +44,14 @@ function parseGreenCI(repoPath) {
       return
     }
 
-    if (insideScript && trimmed.startsWith("-")) {
-      const command = trimmed.replace("-", "").trim()
+    if (
+      insideScript
+      &&
+      trimmed.startsWith("-")
+    ) {
+      const command =
+        trimmed.replace("-", "").trim()
+
       stages.push({
         name: currentStageName,
         command
@@ -54,9 +65,17 @@ function parseGreenCI(repoPath) {
    RUN STAGES SEQUENTIALLY
 ========================= */
 
-async function runStages(job, repoPath, index) {
-  // Skip "clone" stage as it's already handled
-  while (index < job.stages.length && job.stages[index].name === "clone") {
+async function runStages(
+  job,
+  repoPath,
+  index
+) {
+
+  while (
+    index < job.stages.length
+    &&
+    job.stages[index].name === "clone"
+  ) {
     index++
   }
 
@@ -64,27 +83,37 @@ async function runStages(job, repoPath, index) {
     job.status = "COMPLETED"
     job.completedAt = new Date()
     await job.save()
-
     console.log("Pipeline completed")
     return
   }
 
   const stage = job.stages[index]
-  
+
   if (!stage.command) {
-    console.log(`Skipping stage ${stage.name} - no command defined`)
-    stage.status = "SKIPPED"  
+    console.log(
+      `Skipping stage ${stage.name} - no command defined`
+    )
+
+    stage.status = "SKIPPED"
     await job.save()
-    runStages(job, repoPath, index + 1) 
+    runStages(
+      job,
+      repoPath,
+      index + 1
+    )
     return
   }
 
-  console.log(`Running: ${stage.name} → ${stage.command}`)
+  console.log(
+    `Running: ${stage.name} → ${stage.command}`
+  )
 
   stage.status = "RUNNING"
   await job.save()
-  
-  const child = exec(stage.command, { cwd: repoPath })
+  const child = exec(
+    stage.command,
+    { cwd: repoPath }
+  )
 
   child.stdout.on("data", data => {
     stage.logs.push(data.toString())
@@ -95,22 +124,32 @@ async function runStages(job, repoPath, index) {
   })
 
   child.on("close", async (code) => {
+
     if (code !== 0) {
       stage.status = "FAILED"
       job.status = "FAILED"
       job.completedAt = new Date()
-      stage.logs.push("Stage exited with error code: " + code)
-      
+
+      stage.logs.push(
+        "Stage exited with error code: "
+        + code
+      )
+
       await job.save()
-      
-      console.log("Stage failed:", stage.name)
+      console.log(
+        "Stage failed:",
+        stage.name
+      )
       return
     }
 
     stage.status = "COMPLETED"
     await job.save()
-
-    runStages(job, repoPath, index + 1)
+    runStages(
+      job,
+      repoPath,
+      index + 1
+    )
   })
 }
 
@@ -118,27 +157,101 @@ async function runStages(job, repoPath, index) {
    MAIN PIPELINE RUNNER
 ========================= */
 
-async function runPipeline(job, repoPath) {
-  const stages = parseGreenCI(repoPath)
-  
+async function runPipeline(
+  job,
+  repoPath
+) {
+
+  /* ===== SMART ANALYSIS ===== */
+  const pipelineMode =
+    analyzeChanges(
+      job.changedFiles || []
+    )
+  console.log(
+    "Pipeline Mode:",
+    pipelineMode
+  )
+
+  /* ===== DOCS ONLY ===== */
+  if (pipelineMode === "docs-only") {
+    console.log(
+      "Documentation-only commit detected"
+    )
+    console.log(
+      "Skipping heavy execution"
+    )
+    job.status = "COMPLETED"
+    job.completedAt = new Date()
+    await job.save()
+    return
+  }
+
+  /* ===== PARSE PIPELINE ===== */
+  const stages =
+    parseGreenCI(repoPath)
+
   if (stages.length === 0) {
     job.status = "FAILED"
     job.completedAt = new Date()
     await job.save()
-    console.log("No stages found in .greenci.yml")
+    console.log(
+      "No stages found in .greenci.yml"
+    )
     return
   }
 
-  job.stages = stages.map(stage => ({
-    name: stage.name,
-    command: stage.command,
-    status: "PENDING",
-    logs: []
-  }))
-  
-  await job.save()
-  
-  await runStages(job, repoPath, 0)
-}
+  /* ===== FILTER STAGES ===== */
+  let filteredStages = stages
 
+  if (pipelineMode === "frontend-only") {
+    console.log(
+      "Frontend-only pipeline execution"
+    )
+
+    filteredStages =
+      stages.filter(stage =>
+        stage.name
+          .toLowerCase()
+          .includes("frontend")
+        ||
+        stage.name
+          .toLowerCase()
+          .includes("build")
+      )
+  }
+
+  if (pipelineMode === "config-only") {
+    console.log(
+      "Config-only pipeline execution"
+    )
+
+    filteredStages =
+      stages.filter(stage =>
+        stage.name
+          .toLowerCase()
+          .includes("config")
+        ||
+        stage.name
+          .toLowerCase()
+          .includes("validate")
+      )
+  }
+
+  /* ===== STORE STAGES ===== */
+  job.stages =
+    filteredStages.map(stage => ({
+      name: stage.name,
+      command: stage.command,
+      status: "PENDING",
+      logs: []
+    }))
+  await job.save()
+
+  /* ===== EXECUTE ===== */
+  await runStages(
+    job,
+    repoPath,
+    0
+  )
+}
 module.exports = runPipeline

@@ -12,47 +12,35 @@ function calculatePriority(job) {
     Math.floor(waitingMinutes / 2)
 
   /* Branch Weight */
-
   if (job.branch === "main") {
     branchWeight = 5
   }
-
   else if (job.branch === "frontend") {
     branchWeight = 3
   }
-
   else if (job.branch === "api-backend") {
     branchWeight = 3
   }
-
   else if (job.branch === "ai-training") {
     branchWeight = 2
   }
-
   else if (job.branch === "compute-core") {
     branchWeight = 1
   }
 
   /* Energy Cost */
-
   if (job.language === "node") {
     energyCost = 2
   }
-
   else if (job.language === "python") {
     energyCost = 4
   }
-
   else if (job.language === "cpp") {
     energyCost = 8
   }
 
   /* Urgency */
-
-  if (
-    job.commitMessage &&
-    job.commitMessage.includes("hotfix")
-  ) {
+  if (job.commitMessage && job.commitMessage.includes("hotfix")) {
     urgency += 5
   }
 
