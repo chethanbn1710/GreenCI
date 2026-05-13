@@ -1,5 +1,6 @@
 const jobStore = require("../store/jobStore")
 const { addJob } = require("../queue/jobQueue");
+const metrics = require("../metrics/sustainabilityMetrics")
 
 async function detectLanguage(languages_url) {
 
@@ -28,7 +29,7 @@ async function scheduleJob(repo, branch, commit, languages_url, clone_url, chang
     clone_url,
     changedFiles
   });
-
+  metrics.addTotalJob()
   addJob(job);
   console.log("Job scheduled:", job._id.toString());
   return job;

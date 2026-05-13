@@ -10,6 +10,7 @@ const Job = require("./models/jobs");
 const webhookRoute = require("./routes/webhook");
 const jobStore = require("./store/jobStore");
 const startWorkManager = require("./manager/workManager");
+const metrics = require("./metrics/sustainabilityMetrics")
 
 const app = express();
 
@@ -60,6 +61,12 @@ app.get("/stats", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
+
+app.get("/metrics", (req, res) => {
+  res.json(
+    metrics.getMetrics()
+  )
+})
 
 connectDB();
 

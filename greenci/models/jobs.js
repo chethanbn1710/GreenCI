@@ -14,6 +14,7 @@ const JobSchema = new mongoose.Schema({
   commit: String,
   clone_url: String,
   languages_url: String,
+  priorityScore: {type: Number, default: 0},
   status: String,
   workerId: Number,
   createdAt: Date,

@@ -66,6 +66,18 @@
       cursor: pointer;
     }
 
+    /* ================= METRICS BUTTON ================= */
+    #metricsBtn {
+      position: fixed;
+      top: 25px;
+      right: 320px;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(6px);
+      padding: 14px 28px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
 
     /* ================= QUOTE ================= */
     #quote {
@@ -139,10 +151,48 @@
     }
 
     .detail-mode #statusTile,
-.detail-mode #totalJobsTile,
-.detail-mode #detailBtn {
+    .detail-mode #totalJobsTile,
+    .detail-mode #detailBtn {
   display: none;
 }
+
+    /* ================= METRICS PANEL ================= */
+
+    #metricsPanel {
+      position: fixed;
+      top: 90px;
+      right: 40px;
+      width: 320px;
+      background: rgba(0,0,0,.82);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 20px;
+      display: none;
+      z-index: 999;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    #metricsPanel h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #00ff99;
+    }
+
+    .metricRow {
+      margin-bottom: 16px;
+      font-size: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .metricValue {
+      color: #00ff99;
+      font-weight: bold;
+    }
+
+    .showMetrics {
+      display: block !important;
+    }
 
     /* animate entry */
     .show {
@@ -198,7 +248,7 @@
 
     /* ================= LOG STYLE ================= */
 .log {
-  font-size: 11px;
+  font-size: 18px;
   margin-top: 4px; /* Small gap between logs */
   margin-bottom: 0;
   background: rgba(0, 0, 0, .5);
@@ -216,7 +266,7 @@
 
 .stageLogs {
   margin-top: 4px; /* Gap between the log header and stage logs */
-  font-size: 9px;
+  font-size: 8px;
   max-height: 80px;
   overflow-y: auto;
   color: #94a3b8;
@@ -243,6 +293,11 @@
 
   <div id="dashboard">
 
+    <!-- METRICS BUTTON -->
+    <div id="metricsBtn">
+      METRICS
+    </div>
+
     <!-- STATUS TILE -->
     <div id="statusTile">
       Master: <span id="masterStatus">...</span>
@@ -263,6 +318,66 @@
       DETAIL VIEW
     </div>
 
+
+    <!-- METRICS PANEL -->
+
+    <div id="metricsPanel">
+
+      <h2>
+        Sustainability Metrics
+      </h2>
+
+      <div class="metricRow">
+        <span>Pipelines Avoided</span>
+        <span
+          class="metricValue"
+          id="pipelinesAvoided"
+        >
+          0
+        </span>
+      </div>
+
+      <div class="metricRow">
+        <span>Compute Saved</span>
+        <span
+          class="metricValue"
+          id="computeSaved"
+        >
+          0 mins
+        </span>
+      </div>
+
+      <div class="metricRow">
+        <span>Worker Efficiency</span>
+        <span
+          class="metricValue"
+          id="workerEfficiency"
+        >
+          0%
+        </span>
+      </div>
+
+      <div class="metricRow">
+        <span>Queue Efficiency</span>
+        <span
+          class="metricValue"
+          id="queueEfficiency"
+        >
+          0%
+        </span>
+      </div>
+
+      <div class="metricRow">
+        <span>Energy Score</span>
+        <span
+          class="metricValue"
+          id="energyScore"
+        >
+          0
+        </span>
+      </div>
+
+    </div>
 
     <!-- JOB CARDS -->
     <div class="grid">
@@ -335,7 +450,7 @@
           <div>
               <b>${stage.name}</b> : ${stage.status}
             <div class="stageLogs">
-              ${(stage.logs || []).join("<br>")}
+              ${(stage.logs || []).slice(-2).join("<br>")}
             </div>
           </div>
           `
@@ -344,11 +459,36 @@
 
         let log = `
           <div class="log">
-           #${job._id} ${job.repo}
-            ${stageLogsHTML}
-          </div>
-          `
 
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                margin-bottom:8px;
+              "
+            >
+
+              <span>
+                #${job._id}
+                ${job.repo}
+              </span>
+
+              <span
+                style="
+                  color:#00ff99;
+                  font-weight:bold;
+                "
+              >
+                P:${job.priorityScore || 0}
+              </span>
+
+            </div>
+
+            ${stageLogsHTML}
+
+          </div>
+        `
+          
           if (job.status === "QUEUED" || job.status === "WAITING_FOR_WORKER") {
             q++;
             queueLogs.insertAdjacentHTML("beforeend", log);
@@ -416,7 +556,72 @@
     loadSystem();
     loadStats();
 
+        /* ================= METRICS ================= */
 
+    async function loadMetrics() {
+
+      try {
+
+        let res =
+          await fetch("/metrics")
+
+        let data =
+          await res.json()
+
+        document.getElementById(
+          "pipelinesAvoided"
+        ).innerText =
+          data.pipelinesAvoided
+
+        document.getElementById(
+          "computeSaved"
+        ).innerText =
+          data.computeSaved + " mins"
+
+        document.getElementById(
+          "workerEfficiency"
+        ).innerText =
+          data.workerEfficiency + "%"
+
+        document.getElementById(
+          "queueEfficiency"
+        ).innerText =
+          data.queueEfficiency + "%"
+
+        document.getElementById(
+          "energyScore"
+        ).innerText =
+          data.energyScore
+
+      }
+
+      catch(err) {
+
+        console.log(
+          "Metrics unavailable"
+        )
+
+      }
+
+    }
+
+    setInterval(loadMetrics, 3000)
+
+    loadMetrics()
+
+
+        /* ================= METRICS TOGGLE ================= */
+
+    document.getElementById(
+      "metricsBtn"
+    ).onclick = () => {
+
+      document
+        .getElementById("metricsPanel")
+        .classList
+        .toggle("showMetrics")
+
+    }
     /* ================= DETAIL MODE ================= */
 
     document.getElementById("detailBtn").onclick = () => {

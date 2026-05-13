@@ -1,6 +1,6 @@
 function calculatePriority(job) {
 
-  let branchWeight = 1
+  let branchWeight = 10
   let energyCost = 1
   let urgency = 0
 
@@ -11,44 +11,71 @@ function calculatePriority(job) {
   const waitingTimeBoost =
     Math.floor(waitingMinutes / 2)
 
-  /* Branch Weight */
+  /* ================= BRANCH WEIGHT ================= */
+
   if (job.branch === "main") {
-    branchWeight = 5
+    branchWeight = 40
   }
+
   else if (job.branch === "frontend") {
-    branchWeight = 3
+    branchWeight = 30
   }
+
   else if (job.branch === "api-backend") {
-    branchWeight = 3
+    branchWeight = 28
   }
+
   else if (job.branch === "ai-training") {
-    branchWeight = 2
+    branchWeight = 22
   }
+
   else if (job.branch === "compute-core") {
-    branchWeight = 1
+    branchWeight = 15
   }
 
-  /* Energy Cost */
+  /* ================= ENERGY COST ================= */
+
   if (job.language === "node") {
-    energyCost = 2
+    energyCost = 5
   }
+
   else if (job.language === "python") {
-    energyCost = 4
+    energyCost = 10
   }
+
   else if (job.language === "cpp") {
-    energyCost = 8
+    energyCost = 18
   }
 
-  /* Urgency */
-  if (job.commitMessage && job.commitMessage.includes("hotfix")) {
-    urgency += 5
+  /* ================= URGENCY ================= */
+
+  if (
+    job.commitMessage &&
+    job.commitMessage
+      .toLowerCase()
+      .includes("hotfix")
+  ) {
+    urgency += 25
   }
 
-  const priority =
+  /* ================= FINAL SCORE ================= */
+
+  let priority =
+
     branchWeight
-    + waitingTimeBoost
-    + urgency
-    - energyCost
+    +
+    waitingTimeBoost
+    +
+    urgency
+    -
+    energyCost
+
+  /* ================= LIMIT RANGE ================= */
+
+  priority = Math.max(
+    1,
+    Math.min(100, priority)
+  )
 
   return priority
 }

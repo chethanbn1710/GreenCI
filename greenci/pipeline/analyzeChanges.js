@@ -1,26 +1,80 @@
-function analyzeChanges(changedFiles) {
+function analyzeChanges(files) {
 
-  let pipelineMode = "full"
+  if (!files || files.length === 0) {
+    return "full"
+  }
 
-  const docsOnly =
-    changedFiles.every(file => file.endsWith(".md") || file.includes("README"))
+  const docsExtensions = [
+    ".md",
+    ".txt"
+  ]
 
-  const frontendOnly =
-    changedFiles.every(file => file.includes("frontend") || file.endsWith(".js") || file.endsWith(".css"))
+  const configFiles = [
+    ".env",
+    ".yaml",
+    ".yml",
+    "package.json"
+  ]
 
-  const configOnly =
-    changedFiles.every(file => file.includes(".greenci") || file.endsWith(".yml") || file.endsWith(".json"))
+  let docsOnly = true
+  let configOnly = true
+  let frontendOnly = true
+
+  for (const file of files) {
+
+    const lower =
+      file.toLowerCase()
+
+    /* ===== DOC CHECK ===== */
+
+    const isDoc =
+      docsExtensions.some(ext =>
+        lower.endsWith(ext)
+      )
+
+    if (!isDoc) {
+      docsOnly = false
+    }
+
+    /* ===== CONFIG CHECK ===== */
+
+    const isConfig =
+      configFiles.some(cfg =>
+        lower.includes(cfg)
+      )
+
+    if (!isConfig) {
+      configOnly = false
+    }
+
+    /* ===== FRONTEND CHECK ===== */
+
+    const isFrontend =
+      lower.endsWith(".html")
+      ||
+      lower.endsWith(".css")
+      ||
+      lower.endsWith(".js")
+
+    if (!isFrontend) {
+      frontendOnly = false
+    }
+
+  }
 
   if (docsOnly) {
-    pipelineMode = "docs-only"
+    return "docs-only"
   }
-  else if (frontendOnly) {
-    pipelineMode = "frontend-only"
+
+  if (configOnly) {
+    return "config-only"
   }
-  else if (configOnly) {
-    pipelineMode = "config-only"
+
+  if (frontendOnly) {
+    return "frontend-only"
   }
-  return pipelineMode
+
+  return "full"
 }
 
 module.exports = analyzeChanges

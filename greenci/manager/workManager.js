@@ -146,9 +146,12 @@ function startWorkManager() {
   setInterval(async () => {
     const queue = await jobStore.getQueuedJobs()
 
-    queue.sort(
-      (a, b) => calculatePriority(b) - calculatePriority(a)
-    )
+    for (const job of queue) {
+      job.priorityScore = calculatePriority(job)
+      await job.save()
+    }
+
+    queue.sort((a, b) => b.priorityScore - a.priorityScore)
 
     for (let i = 0; i < queue.length; i++) {
       const job = queue[i]

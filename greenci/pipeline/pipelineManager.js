@@ -2,6 +2,7 @@ const fs = require("fs")
 const path = require("path")
 const { exec } = require("child_process")
 const Job = require("../models/jobs.js")
+const metrics = require("../metrics/sustainabilityMetrics")
 
 const analyzeChanges = require("./analyzeChanges")
 
@@ -9,8 +10,7 @@ const analyzeChanges = require("./analyzeChanges")
    PARSE YAML WITH STAGE NAMES
 ========================= */
 function parseGreenCI(repoPath) {
-  const filePath =
-    path.join(repoPath, ".greenci.yml")
+  const filePath = path.join(repoPath, ".greenci.yml")
 
   if (!fs.existsSync(filePath)) {
     console.log("No .greenci.yml found")
@@ -18,42 +18,35 @@ function parseGreenCI(repoPath) {
   }
 
   const content = fs.readFileSync(filePath, "utf-8")
-
   const lines = content.split("\n")
   const stages = []
 
-  let currentStageName = ""
-  let insideScript = false
-
+  let currentStage = null
   lines.forEach(line => {
     const trimmed = line.trim()
-
     if (
-      !line.startsWith(" ")
-      &&
       trimmed.endsWith(":")
+      &&
+      !trimmed.startsWith("-")
+      &&
+      !trimmed.startsWith("script")
       &&
       !trimmed.startsWith("stages")
     ) {
-      currentStageName =
+      currentStage =
         trimmed.replace(":", "")
-    }
-
-    if (trimmed.startsWith("script:")) {
-      insideScript = true
       return
     }
 
     if (
-      insideScript
-      &&
       trimmed.startsWith("-")
+      &&
+      currentStage
     ) {
       const command =
         trimmed.replace("-", "").trim()
-
       stages.push({
-        name: currentStageName,
+        name: currentStage,
         command
       })
     }
@@ -80,12 +73,15 @@ async function runStages(
   }
 
   if (index >= job.stages.length) {
-    job.status = "COMPLETED"
-    job.completedAt = new Date()
-    await job.save()
-    console.log("Pipeline completed")
-    return
-  }
+  job.status = "COMPLETED"
+  metrics.addCompletedJob()
+  metrics.addComputeSaved(1)
+  job.completedAt = new Date()
+  job.markModified("stages")
+  await job.save()
+  console.log("Pipeline completed")
+  return
+}
 
   const stage = job.stages[index]
 
@@ -95,8 +91,9 @@ async function runStages(
     )
 
     stage.status = "SKIPPED"
+    job.markModified("stages")
     await job.save()
-    runStages(
+    await runStages(
       job,
       repoPath,
       index + 1
@@ -109,6 +106,7 @@ async function runStages(
   )
 
   stage.status = "RUNNING"
+  job.markModified("stages")
   await job.save()
   const child = exec(
     stage.command,
@@ -117,16 +115,19 @@ async function runStages(
 
   child.stdout.on("data", data => {
     stage.logs.push(data.toString())
+    job.markModified("stages")
   })
 
   child.stderr.on("data", data => {
     stage.logs.push(data.toString())
+    job.markModified("stages")
   })
 
   child.on("close", async (code) => {
 
     if (code !== 0) {
       stage.status = "FAILED"
+      job.markModified("stages")
       job.status = "FAILED"
       job.completedAt = new Date()
 
@@ -144,8 +145,9 @@ async function runStages(
     }
 
     stage.status = "COMPLETED"
+    job.markModified("stages")
     await job.save()
-    runStages(
+    await runStages(
       job,
       repoPath,
       index + 1
@@ -180,7 +182,24 @@ async function runPipeline(
     console.log(
       "Skipping heavy execution"
     )
+    metrics.addAvoidedPipeline()
+
+    metrics.addSkippedStages(4)
+
+    metrics.addComputeSaved(3)
+
+    job.stages = [
+      {
+        name: "docs-validation",
+        command: "skipped",
+        status: "SKIPPED",
+        logs: [
+          "Skipped heavy execution"
+        ]
+      }
+    ]
     job.status = "COMPLETED"
+    metrics.addCompletedJob()
     job.completedAt = new Date()
     await job.save()
     return
@@ -245,6 +264,7 @@ async function runPipeline(
       status: "PENDING",
       logs: []
     }))
+  job.markModified("stages")
   await job.save()
 
   /* ===== EXECUTE ===== */
