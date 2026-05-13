@@ -81,7 +81,7 @@ async function simulateTraffic() {
     }
 
     const waitTime =
-      Math.floor(Math.random() * 2000) + 500;
+      Math.floor(Math.random() * 10000) + 1000;
 
     console.log(
       `Waiting ${waitTime / 1000}s...\n`

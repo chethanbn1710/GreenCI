@@ -4,25 +4,21 @@ const workers = [];
 function initWorkers() {
   let id = 1;
 
-  // Node workers (2)
-  for (let i = 0; i < 2; i++) {
+  // Node worker (1)
     workers.push({
       id: id++,
       type: "node",
       busy: false,
       currentJobId: null
     });
-  }
 
-  // Python workers (2)
-  for (let i = 0; i < 2; i++) {
+  // Python worker (1)
     workers.push({
       id: id++,
       type: "python",
       busy: false,
       currentJobId: null
     });
-  }
 
   // C++ worker (1)
   workers.push({

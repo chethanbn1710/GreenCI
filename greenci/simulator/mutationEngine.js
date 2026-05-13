@@ -16,27 +16,21 @@ function mutateFile(repoPath, fileName, repoType) {
   let mutation = "";
 
   switch (repoType) {
-
     case "node":
       mutation = `\n// UI simulation update ${timestamp}`;
       break;
-
     case "python":
       mutation = `\n# AI/API simulation update ${timestamp}`;
       break;
-
     case "cpp":
       mutation = `\n// Compute simulation update ${timestamp}`;
       break;
-
     default:
       mutation = `\n# Generic simulation update ${timestamp}`;
   }
 
   content += mutation;
-
   fs.writeFileSync(filePath, content);
-
   console.log(`Mutated ${fileName}`);
 }
 

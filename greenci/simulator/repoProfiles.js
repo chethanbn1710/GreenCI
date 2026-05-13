@@ -4,7 +4,7 @@ module.exports = [
     path: "../../../Jenkins_TargetRepos/GreenDash_UI",
     branches: ["main", "frontend"],
     files: ["app.js", "README.md"],
-    frequency: 800,
+    frequency: 100,
     type: "node"
   },
 
@@ -13,7 +13,7 @@ module.exports = [
     path: "../../../Jenkins_TargetRepos/TaskForge_API",
     branches: ["main", "api-backend"],
     files: ["app.py", "README.md"],
-    frequency: 1500,
+    frequency: 150,
     type: "python"
   },
 
@@ -22,7 +22,7 @@ module.exports = [
     path: "../../../Jenkins_TargetRepos/VisionTrain_AI",
     branches: ["main", "ai-training"],
     files: ["train.py", "README.md"],
-    frequency: 2500,
+    frequency: 200,
     type: "python"
   },
 
@@ -31,7 +31,7 @@ module.exports = [
     path: "../../../Jenkins_TargetRepos/FastCompute_Core",
     branches: ["main", "compute-core"],
     files: ["main.cpp", "README.md"],
-    frequency: 3500,
+    frequency: 250,
     type: "cpp"
   }
 ];

@@ -67,7 +67,29 @@ async function executeJob(job, worker) {
     console.log(`Repo cloned for Job ${job._id}`)
     await updateStage(job._id, "clone", "COMPLETED")
 
-    // Fetch fresh job document from DB before running pipeline
+    /* ===== SIMULATED BUILD DELAY ===== */
+
+    let buildDelay = 15000
+    if (job.language === "node") {
+      buildDelay = 20000
+    }
+    else if (job.language === "python") {
+      buildDelay = 30000
+    }
+    else if (job.language === "cpp") {
+      buildDelay = 45000
+    }
+
+    console.log(
+      `Simulating ${buildDelay / 1000}s build for ${job.language}`
+    )
+
+    await new Promise(resolve =>
+      setTimeout(resolve, buildDelay)
+    )
+
+    /* ===== RUN PIPELINE ===== */
+
     const freshJob = await Job.findById(job._id)
     await runPipeline(freshJob, workspace)
     monitorJobCompletion(freshJob, worker)
@@ -201,7 +223,7 @@ function startWorkManager() {
         monitorAndUnlock(job, worker, jobId)
       }
     }
-  }, 3000)
+  }, 300)
 }
 
 
