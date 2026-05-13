@@ -1,4 +1,4 @@
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const path = require("path");
 
 const repoProfiles = require("./repoProfiles");
@@ -13,70 +13,79 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function runCommand(command, cwdPath) {
-  try {
-    const output = execSync(command, {
+function runCommand(args, cwdPath) {
+
+  execFileSync(
+    "C:/Program Files/Git/cmd/git.exe",
+    args,
+    {
       cwd: cwdPath,
-      encoding: 'utf8',
-      stdio: 'pipe',
+      stdio: "inherit",
       windowsHide: true
-    });
-    if (output) {
-      console.log(output);
     }
-  } catch (error) {
-    // Check if it's a git error vs spawn error
-    if (error.stderr) {
-      console.log(error.stderr);
-    }
-    throw error;
-  }
+  );
+
 }
 
 async function simulateTraffic() {
+
   while (true) {
+
     try {
       const repo = randomItem(repoProfiles);
       const branch = randomItem(repo.branches);
       const file = randomItem(repo.files);
-      const commitMessage = randomItem(commitTemplates);
-      const repoPath = path.resolve(__dirname, repo.path);
-
-      console.log(`\n=== ${repo.name} | ${branch} ===`);
-
-      runCommand(
-        `git checkout ${branch}`,
-        repoPath
-      );
-
-      mutateFile(repoPath, file, repo.type);
-
-      runCommand(
-        "git add .",
-        repoPath
+      const commitMessage =
+        randomItem(commitTemplates);
+      const repoPath =
+        path.resolve(__dirname, repo.path);
+      console.log(
+        `\n=== ${repo.name} | ${branch} ===`
       );
 
       runCommand(
-        `git commit -m "${commitMessage}"`,
+        ["checkout", branch],
+        repoPath
+      );
+
+      mutateFile(
+        repoPath,
+        file,
+        repo.type
+      );
+
+      runCommand(
+        ["add", "."],
         repoPath
       );
 
       runCommand(
-        `git push origin ${branch}`,
+        ["commit", "-m", commitMessage],
         repoPath
       );
 
-      console.log(`Push completed for ${repo.name}`);
+      runCommand(
+        ["push", "origin", branch],
+        repoPath
+      );
+
+      console.log(
+        `Push completed for ${repo.name}`
+      );
 
     } catch (err) {
-      console.log("Simulation Error:", err.message);
+      console.log(
+        "Simulation Error:",
+        err.message
+      );
     }
 
     const waitTime =
-      Math.floor(Math.random() * 10000) + 5000;
+      Math.floor(Math.random() * 2000) + 500;
 
-    console.log(`Waiting ${waitTime / 1000}s...\n`);
-
+    console.log(
+      `Waiting ${waitTime / 1000}s...\n`
+    );
     await sleep(waitTime);
   }
 }
