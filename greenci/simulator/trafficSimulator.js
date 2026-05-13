@@ -25,23 +25,27 @@ async function simulateTraffic() {
       console.log(`\n=== ${repo.name} | ${branch} ===`);
       execSync(`git checkout ${branch}`, {
         cwd: repoPath,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: true
       });
 
       mutateFile(repoPath, file, repo.type);
       execSync("git add .", {
         cwd: repoPath,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: true
       });
 
       execSync(`git commit -m "${commitMessage}"`, {
         cwd: repoPath,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: true
       });
 
       execSync(`git push origin ${branch}`, {
         cwd: repoPath,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: true
       });
 
       console.log(`Push completed for ${repo.name}`);
