@@ -13,6 +13,26 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function runCommand(command, cwdPath) {
+  try {
+    const output = execSync(command, {
+      cwd: cwdPath,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      windowsHide: true
+    });
+    if (output) {
+      console.log(output);
+    }
+  } catch (error) {
+    // Check if it's a git error vs spawn error
+    if (error.stderr) {
+      console.log(error.stderr);
+    }
+    throw error;
+  }
+}
+
 async function simulateTraffic() {
   while (true) {
     try {
@@ -23,30 +43,28 @@ async function simulateTraffic() {
       const repoPath = path.resolve(__dirname, repo.path);
 
       console.log(`\n=== ${repo.name} | ${branch} ===`);
-      execSync(`git checkout ${branch}`, {
-        cwd: repoPath,
-        stdio: "inherit",
-        shell: true
-      });
+
+      runCommand(
+        `git checkout ${branch}`,
+        repoPath
+      );
 
       mutateFile(repoPath, file, repo.type);
-      execSync("git add .", {
-        cwd: repoPath,
-        stdio: "inherit",
-        shell: true
-      });
 
-      execSync(`git commit -m "${commitMessage}"`, {
-        cwd: repoPath,
-        stdio: "inherit",
-        shell: true
-      });
+      runCommand(
+        "git add .",
+        repoPath
+      );
 
-      execSync(`git push origin ${branch}`, {
-        cwd: repoPath,
-        stdio: "inherit",
-        shell: true
-      });
+      runCommand(
+        `git commit -m "${commitMessage}"`,
+        repoPath
+      );
+
+      runCommand(
+        `git push origin ${branch}`,
+        repoPath
+      );
 
       console.log(`Push completed for ${repo.name}`);
 
@@ -54,8 +72,11 @@ async function simulateTraffic() {
       console.log("Simulation Error:", err.message);
     }
 
-    const waitTime = Math.floor(Math.random() * 10000) + 5000;
+    const waitTime =
+      Math.floor(Math.random() * 10000) + 5000;
+
     console.log(`Waiting ${waitTime / 1000}s...\n`);
+
     await sleep(waitTime);
   }
 }
