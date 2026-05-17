@@ -43,49 +43,25 @@ async function simulateTraffic() {
         `\n=== ${repo.name} | ${branch} ===`
       );
 
-      runCommand(
-        ["checkout", branch],
-        repoPath
-      );
+      runCommand(["checkout", branch], repoPath);
 
-      mutateFile(
-        repoPath,
-        file,
-        repo.type
-      );
+      mutateFile(repoPath, file, repo.type);
 
-      runCommand(
-        ["add", "."],
-        repoPath
-      );
-
-      runCommand(
-        ["commit", "-m", commitMessage],
-        repoPath
-      );
-
-      runCommand(
-        ["push", "origin", branch],
-        repoPath
-      );
+      runCommand(["add", "."], repoPath);
+      runCommand(["commit", "-m", commitMessage], repoPath);
+      runCommand(["push", "origin", branch], repoPath);
 
       console.log(
         `Push completed for ${repo.name}`
       );
 
     } catch (err) {
-      console.log(
-        "Simulation Error:",
-        err.message
-      );
+      console.log("Simulation Error:", err.message);
     }
 
-    const waitTime =
-      Math.floor(Math.random() * 10000) + 1000;
+    const waitTime = Math.floor(Math.random() * 10000) + 1000;
 
-    console.log(
-      `Waiting ${waitTime / 1000}s...\n`
-    );
+    console.log(`Waiting ${waitTime / 1000}s...\n`);
     await sleep(waitTime);
   }
 }

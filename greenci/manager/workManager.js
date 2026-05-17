@@ -5,11 +5,7 @@ const path = require("path")
 const Job = require("../models/jobs.js")
 const calculatePriority = require("../scheduler/calculatePriority")
 
-const {
-  getAvailableWorker,
-  assignWorker,
-  releaseWorker
-} = require("../workers/workerPool")
+const {getAvailableWorker, assignWorker, releaseWorker} = require("../workers/workerPool")
 const jobStore = require("../store/jobStore")
 const axios = require("axios")
 
@@ -181,9 +177,9 @@ function startWorkManager() {
           }
 
           if (dominant === "JavaScript") job.language = "node"
-          else if (dominant === "Python")  job.language = "python"
-          else if (dominant === "C++")     job.language = "cpp"
-          else                             job.language = "node"
+          else if (dominant === "Python")job.language = "python"
+          else if (dominant === "C++")   job.language = "cpp"
+          else                           job.language = "node"
 
           console.log(`Job ${jobId} language: ${job.language}`)
         } catch {

@@ -7,7 +7,7 @@ const metrics = require("../metrics/sustainabilityMetrics")
 const analyzeChanges = require("./analyzeChanges")
 
 /* =========================
-   PARSE YAML WITH STAGE NAMES
+   PARSE YML WITH STAGE NAMES
 ========================= */
 function parseGreenCI(repoPath) {
   const filePath = path.join(repoPath, ".greenci.yml")
@@ -25,26 +25,16 @@ function parseGreenCI(repoPath) {
   lines.forEach(line => {
     const trimmed = line.trim()
     if (
-      trimmed.endsWith(":")
+      trimmed.endsWith(":") && !trimmed.startsWith("-")
       &&
-      !trimmed.startsWith("-")
-      &&
-      !trimmed.startsWith("script")
-      &&
-      !trimmed.startsWith("stages")
+      !trimmed.startsWith("script") && !trimmed.startsWith("stages")
     ) {
-      currentStage =
-        trimmed.replace(":", "")
+      currentStage = trimmed.replace(":", "")
       return
     }
 
-    if (
-      trimmed.startsWith("-")
-      &&
-      currentStage
-    ) {
-      const command =
-        trimmed.replace("-", "").trim()
+    if (trimmed.startsWith("-") && currentStage) {
+      const command = trimmed.replace("-", "").trim()
       stages.push({
         name: currentStage,
         command
