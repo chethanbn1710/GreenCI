@@ -1,103 +1,130 @@
 # GreenCI
 
-GreenCI is a lightweight Jenkins-inspired Continuous Integration (CI) system built with Node.js, Express, MongoDB, and a custom worker scheduler. It automates pipeline execution on every GitHub push using a `.greenci.yml` configuration file and provides a real-time dashboard for job status.
+GreenCI is the active CI engine in this repository. It is a Jenkins-inspired job scheduler and pipeline runner built in Node.js and Express, with MongoDB persistence and a custom worker pool.
 
-## Features
+## What GreenCI Does Today
 
-- GitHub webhook-triggered pipelines
-- YAML-based pipeline configuration (`.greenci.yml`)
-- Language-aware worker pool scheduling (Node, Python, C++)
-- MongoDB-backed job persistence
-- Real-time dashboard with Queue, Active, and Done views
-- Live stage status tracking and logs
-- Workspace isolation per job
-- Automatic cleanup of old workspaces
+- Receives GitHub push webhook events at `POST /webhook`
+- Schedules repository jobs automatically from webhook payloads
+- Detects repository language using GitHub language statistics
+- Queues jobs and assigns them to language-specific workers
+- Clones the repository into an isolated `workspace/job-<id>` folder
+- Parses `.greenci.yml` for pipeline stages and shell commands
+- Executes pipeline stages sequentially inside the cloned repo
+- Tracks stage status, logs, and final job state in MongoDB
+- Supports "docs-only", "frontend-only", and "config-only" change filtering
+- Keeps only recent workspaces and deletes older ones automatically
+- Serves a dashboard and API endpoints from `greenci/server.js`
 
-## Project Structure
+## Current Project Layout
 
 ```
 Jenkins_CI-CD/
-│
-├── backend/         # Node.js Express backend for task/project management
-│   ├── database.js
-│   ├── Dockerfile
-│   ├── server.js
-│   └── tests/
-│
-├── frontend/        # React-based frontend dashboard
-│   ├── public/
-│   └── src/
-│
-├── greenci/         # Main CI server and worker logic
-│   ├── database/
-│   ├── manager/
-│   ├── models/
-│   ├── pipeline/
-│   ├── public/
-│   ├── queue/
-│   ├── routes/
-│   ├── scheduler/
-│   ├── store/
-│   └── workers/
-│
-└── workspace/       # Isolated job workspaces (auto-generated)
+├── backend/          # Separate Express API example (not the core CI engine)
+├── frontend/         # React app scaffold (dashboard/front-end example)
+├── greenci/          # Active CI server, webhook, scheduler, workers, and dashboard
+│   ├── database/     # MongoDB connection
+│   ├── manager/      # Work manager and job execution orchestration
+│   ├── models/       # Mongoose job schema
+│   ├── pipeline/     # Pipeline parsing and stage runner
+│   ├── public/       # Static dashboard HTML and assets
+│   ├── queue/        # Job queue integration
+│   ├── routes/       # Webhook route
+│   ├── scheduler/    # Job scheduler/priority calculation
+│   ├── store/        # Job persistence helpers
+│   └── workers/      # Language-specific worker pool
+└── workspace/        # Job workspaces created at runtime
 ```
 
-## Tech Stack
+## Requirements
 
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB, Mongoose
-- **Frontend:** React, HTML, CSS, JavaScript
+- Node.js (14+ recommended)
+- MongoDB running at `mongodb://127.0.0.1:27017/greenci`
+- `git` installed and available on the PATH
 
-## How It Works
+## GreenCI Behavior
 
-1. Push code to GitHub
-2. Webhook triggers GreenCI server
-3. Job enters queue
-4. Worker is assigned automatically
-5. Repository is cloned
-6. Pipeline executes using `.greenci.yml`
-7. Results appear on dashboard
+### Webhook handling
 
-## Example Pipeline File
+- `POST /webhook` accepts GitHub push event payloads
+- extracts repository name, branch, clone URL, language metadata, and changed files
+- schedules a new job asynchronously and stores it in MongoDB
 
-Create a `.greenci.yml` in your repository:
+### Job scheduling and execution
+
+- New jobs start as `QUEUED`
+- `greenci/manager/workManager.js` polls queued jobs every 300ms
+- It updates priority scores and detects the dominant repository language
+- It moves jobs into `WAITING_FOR_WORKER`, then assigns an available worker
+- Workers are initialized as:
+  - 1 `node` worker
+  - 2 `python` workers
+  - 2 `cpp` workers
+- Once assigned, the worker clones the repo, simulates a language-specific build delay, and runs the pipeline
+
+### Pipeline execution
+
+- `.greenci.yml` is parsed by `greenci/pipeline/pipelineManager.js`
+- stage definitions are extracted from YAML-style stage names and `-` commands
+- each stage runs sequentially with shell execution in the repo workspace
+- `clone` stage is managed separately by the work manager before pipeline stages
+- failed stages mark the job `FAILED`; successful completion marks the job `COMPLETED`
+
+### Change-based optimization
+
+`greenci/pipeline/analyzeChanges.js` classifies commits as:
+
+- `docs-only` → skips heavy execution, marks the pipeline complete with a skipped validation stage
+- `frontend-only` → runs only stages whose names include `frontend` or `build`
+- `config-only` → runs only stages whose names include `config` or `validate`
+- otherwise → runs the full configured pipeline
+
+### Workspace cleanup
+
+- Workspaces are created under `greenci/workspace/job-<jobId>`
+- once more than 5 workspaces exist, the oldest ones are removed automatically
+
+## API Endpoints
+
+- `GET /` → serves `public/dashboard.html`
+- `GET /jobs` → all jobs
+- `GET /jobs/queued` → queued jobs
+- `GET /jobs/in-progress` → running jobs
+- `GET /jobs/completed` → completed jobs
+- `GET /workers` → available worker count
+- `GET /server-status` → simple health check
+- `GET /stats` → total job count
+- `GET /metrics` → sustainability/job metrics
+
+## Example `.greenci.yml`
+
+Create a `.greenci.yml` file at the root of your repository:
 
 ```yaml
 build:
-  script:
-    - echo "Build step completed"
-install_dependencies:
-  script:
-    - echo "Install dependencies completed"
-run_tests:
-  script:
-    - echo "Tests completed"
+  - npm install
+  - npm test
+lint:
+  - npm run lint
+package:
+  - echo "Package complete"
 ```
 
-## Usage
+GreenCI parses stage names and commands, then executes each command in order inside the cloned repository.
 
-### Backend
+## Run GreenCI
 
-- Install dependencies: `npm install` (in `backend/`)
-- Run server: `node server.js`
+```bash
+cd greenci
+npm install
+node server.js
+```
 
-### Frontend
+Then point your GitHub webhook to `http://<host>:7000/webhook`.
 
-- Install dependencies: `npm install` (in `frontend/`)
-- Start development server: `npm start`
+## Notes
 
-### GreenCI Server
-
-- Install dependencies: `npm install` (in `greenci/`)
-- Run server: `node server.js`
-
-## Dashboard
-
-The dashboard is available at `greenci/public/dashboard.html` and displays job queues, active jobs, and completed jobs with real-time updates.
-
-## Images & Assets
-
-- Dashboard and detail tiles are in `greenci/public/images/`
-- Custom background images for the dashboard
+- The `backend/` and `frontend/` folders are present in this repository, but the active CI workflow is implemented in `greenci/`.
+- The server uses MongoDB for job persistence and stores job history in the `greenci` database.
+- The dashboard is served from the `greenci/public` folder and is available at `http://localhost:7000/` by default.
 
